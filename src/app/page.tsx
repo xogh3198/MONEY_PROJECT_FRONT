@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { newsApi, engineApi } from '@/lib/api';
+import { fetchIndicators, fetchHotNews } from '@/lib/api';
 
 interface Indicator {
   type: string;
@@ -30,33 +30,28 @@ export default function HomePage() {
 
   const loadIndicators = async () => {
     try {
-      const res = await newsApi.get('/api/market/indicators');
-      setIndicators(res.data);
+      const data = await fetchIndicators();
+      if (data && data.length > 0) setIndicators(data);
     } catch {
-      // 백엔드 미연결 시 기본값
-      setIndicators([
-        { type: 'KOSPI', name: '코스피', value: 2847.52, changePercent: 1.23 },
-        { type: 'KOSDAQ', name: '코스닥', value: 892.15, changePercent: -0.45 },
-        { type: 'USD_KRW', name: '원/달러', value: 1342.50, changePercent: 0.12 },
-        { type: 'SP500', name: 'S&P500', value: 5892.30, changePercent: 0.67 },
-        { type: 'BTC', name: '비트코인', value: 98452, changePercent: -2.10 },
-      ]);
+      // 백엔드 미연결 시 기본값 유지
     }
   };
 
   const loadNews = async () => {
     try {
-      const res = await newsApi.get('/api/news/hot');
-      setNews(res.data);
+      const data = await fetchHotNews();
+      if (data && data.length > 0) {
+        setNews(data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          sourceName: item.sourceName || '기타',
+          publishedAt: formatTime(item.publishedAt),
+          commentCount: item.commentCount || 0,
+          category: item.category || '',
+        })));
+      }
     } catch {
-      // 백엔드 미연결 시 시드
-      setNews([
-        { id: '1', title: '한은, 기준금리 3.0% 동결..."하반기 인하 검토"', sourceName: '한국경제', publishedAt: '2시간 전', commentCount: 56, category: '금리' },
-        { id: '2', title: '삼성전자, AI 반도체 수주 급증...목표가 상향', sourceName: '매일경제', publishedAt: '3시간 전', commentCount: 124, category: '국내증시' },
-        { id: '3', title: '원/달러 환율 1,350원 돌파...달러 강세 지속', sourceName: '연합뉴스', publishedAt: '4시간 전', commentCount: 38, category: '환율' },
-        { id: '4', title: '비트코인 10만 달러 재도전, 기관 ETF 매수 지속', sourceName: '코인데스크', publishedAt: '5시간 전', commentCount: 92, category: '암호화폐' },
-        { id: '5', title: '나스닥 사상 최고치 경신...엔비디아 10% 급등', sourceName: '서울경제', publishedAt: '6시간 전', commentCount: 67, category: '해외증시' },
-      ]);
+      // 백엔드 미연결 시 시드 유지
     }
   };
 
@@ -131,4 +126,13 @@ export default function HomePage() {
       </div>
     </div>
   );
+}
+
+function formatTime(dateStr: string): string {
+  if (!dateStr) return '';
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+  if (diff < 1) return '방금';
+  if (diff < 60) return `${diff}분 전`;
+  if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
+  return `${Math.floor(diff / 1440)}일 전`;
 }

@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://43.200.177.146:8083';
-const ENGINE_API = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://43.200.177.146:8080';
+// Next.js rewrites를 통한 프록시 — Mixed Content 문제 해결
+// 프론트 자체 도메인의 /api/... 경로로 호출하면 Next.js가 백엔드로 프록시
+const API_BASE = '';  // 빈 문자열 = 같은 도메인 (rewrites가 처리)
 
-export const newsApi = axios.create({ baseURL: NEWS_API });
-export const engineApi = axios.create({ baseURL: ENGINE_API });
+export const newsApi = axios.create({ baseURL: API_BASE, timeout: 10000 });
+export const engineApi = axios.create({ baseURL: API_BASE, timeout: 10000 });
 
 // 인증 토큰 설정
 export function setAuthToken(token: string) {
@@ -38,6 +39,12 @@ export async function postComment(articleId: string, content: string, username: 
   const res = await newsApi.post('/api/forum/comments', {
     articleId, content, username, userId: crypto.randomUUID(),
   });
+  return res.data;
+}
+
+// Market API
+export async function fetchIndicators() {
+  const res = await newsApi.get('/api/market/indicators');
   return res.data;
 }
 
