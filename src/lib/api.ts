@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://localhost:8083';
-const ENGINE_API = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8080';
+const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://43.200.177.146:8083';
+const ENGINE_API = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://43.200.177.146:8080';
 
 export const newsApi = axios.create({ baseURL: NEWS_API });
 export const engineApi = axios.create({ baseURL: ENGINE_API });
