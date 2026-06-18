@@ -15,8 +15,10 @@ const NAV_ITEMS = [
 export default function Navigation() {
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
   }, []);
@@ -45,7 +47,9 @@ export default function Navigation() {
         </nav>
 
         <div className="flex items-center gap-3">
-          {user ? (
+          {!mounted ? (
+            <div className="w-16 h-8" /> 
+          ) : user ? (
             <>
               <span className="text-xs text-text-secondary">{user.nickname || user.email}</span>
               <button onClick={logout} className="text-xs text-text-secondary hover:text-negative">로그아웃</button>
