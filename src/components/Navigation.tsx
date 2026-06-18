@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: '/', label: '홈' },
   { href: '/forum', label: '경제뉴스' },
   { href: '/market', label: '시장지표' },
+  { href: '/calendar', label: '캘린더' },
   { href: '/dividend', label: '배당관리' },
 ];
 
