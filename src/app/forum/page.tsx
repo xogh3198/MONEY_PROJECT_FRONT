@@ -160,6 +160,9 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
         <span className="text-text-secondary">{article.sourceName}</span>
         <span className="text-border">·</span>
         <span className="text-text-secondary">{timeAgo(article.publishedAt)}</span>
+        {showRank && (
+          <span className="text-[10px] text-text-secondary ml-1">👁 {article.viewCount.toLocaleString()}</span>
+        )}
         <span className={`ml-auto px-2 py-0.5 rounded text-[10px] font-medium ${sentimentLabel.color}`}>
           {sentimentLabel.text}
         </span>
