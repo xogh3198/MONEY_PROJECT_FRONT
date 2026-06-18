@@ -94,18 +94,32 @@ export default function HomePage() {
                   <div className="text-[11px] text-text-secondary">AI 기반 흐름 분석</div>
                 </div>
               </Link>
-              <Link href="/dividend" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
-                <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-lg">💰</div>
+              <Link href="/calendar" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
+                <div className="w-8 h-8 rounded-lg bg-[#d29922]/20 flex items-center justify-center text-lg">📅</div>
                 <div>
-                  <div className="text-sm font-medium">배당 캘린더</div>
-                  <div className="text-[11px] text-text-secondary">포트폴리오 배당 관리</div>
+                  <div className="text-sm font-medium">경제 캘린더</div>
+                  <div className="text-[11px] text-text-secondary">FOMC, 금통위, 실적</div>
                 </div>
               </Link>
-              <Link href="/login" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
-                <div className="w-8 h-8 rounded-lg bg-[#f85149]/20 flex items-center justify-center text-lg">🔔</div>
+              <Link href="/tools" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
+                <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-lg">💱</div>
                 <div>
-                  <div className="text-sm font-medium">알림 설정</div>
-                  <div className="text-[11px] text-text-secondary">카카오톡 배당 알림</div>
+                  <div className="text-sm font-medium">투자 도구</div>
+                  <div className="text-[11px] text-text-secondary">환율·세금 계산기</div>
+                </div>
+              </Link>
+              <Link href="/search" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
+                <div className="w-8 h-8 rounded-lg bg-[#f85149]/20 flex items-center justify-center text-lg">🔍</div>
+                <div>
+                  <div className="text-sm font-medium">종목 검색</div>
+                  <div className="text-[11px] text-text-secondary">주식 정보 조회</div>
+                </div>
+              </Link>
+              <Link href="/dividend" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
+                <div className="w-8 h-8 rounded-lg bg-[#a371f7]/20 flex items-center justify-center text-lg">💰</div>
+                <div>
+                  <div className="text-sm font-medium">배당 관리</div>
+                  <div className="text-[11px] text-text-secondary">포트폴리오 배당 캘린더</div>
                 </div>
               </Link>
             </div>
