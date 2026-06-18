@@ -27,11 +27,22 @@ export default function ForumPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
     setPage(0);
     setArticles([]);
     loadArticles(0);
+  }, [tab, category]);
+
+  // 실시간 탭: 60초마다 자동 새로고침
+  useEffect(() => {
+    if (tab !== 'realtime') return;
+    const interval = setInterval(() => {
+      loadArticles(0);
+      setLastUpdate(new Date());
+    }, 60000);
+    return () => clearInterval(interval);
   }, [tab, category]);
 
   const loadArticles = async (pageNum: number) => {
@@ -72,7 +83,12 @@ export default function ForumPage() {
     <div>
       <div className="mb-5">
         <h1 className="text-xl font-bold">경제뉴스</h1>
-        <p className="text-xs text-text-secondary mt-1">실시간 경제 뉴스와 시장 분석</p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-xs text-text-secondary">실시간 경제 뉴스와 시장 분석</p>
+          {tab === 'realtime' && (
+            <span className="text-[10px] text-accent animate-pulse">● LIVE</span>
+          )}
+        </div>
       </div>
 
       {/* 인기/실시간 탭 */}
