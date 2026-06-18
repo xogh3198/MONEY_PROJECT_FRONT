@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchIndicators, fetchHotNews } from '@/lib/api';
+import { IndicatorSkeleton, NewsListSkeleton } from '@/components/Skeleton';
 
 interface Indicator { type: string; name: string; value: number; changePercent: number; }
 interface NewsItem { id: string; title: string; summary?: string; sourceName: string; publishedAt: string; commentCount: number; category: string; sentiment: string; viewCount?: number; sourceUrl?: string; }
@@ -9,10 +10,12 @@ interface NewsItem { id: string; title: string; summary?: string; sourceName: st
 export default function HomePage() {
   const [indicators, setIndicators] = useState<Indicator[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [loadingIndicators, setLoadingIndicators] = useState(true);
+  const [loadingNews, setLoadingNews] = useState(true);
 
   useEffect(() => {
-    fetchIndicators().then(d => { if (d?.length) setIndicators(d); }).catch(() => {});
-    fetchHotNews().then(d => { if (d?.length) setNews(d); }).catch(() => {});
+    fetchIndicators().then(d => { if (d?.length) setIndicators(d); }).catch(() => {}).finally(() => setLoadingIndicators(false));
+    fetchHotNews().then(d => { if (d?.length) setNews(d); }).catch(() => {}).finally(() => setLoadingNews(false));
   }, []);
 
   return (
@@ -23,6 +26,7 @@ export default function HomePage() {
           <h2 className="text-sm font-semibold text-text-secondary">실시간 시장지표</h2>
           <Link href="/market" className="text-xs text-accent-blue hover:underline">상세 →</Link>
         </div>
+        {loadingIndicators ? <IndicatorSkeleton /> : (
         <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
           {sortIndicators(indicators).map(ind => {
             const isUp = ind.changePercent >= 0;
