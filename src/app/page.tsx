@@ -24,7 +24,7 @@ export default function HomePage() {
           <Link href="/market" className="text-xs text-accent-blue hover:underline">상세 →</Link>
         </div>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-          {indicators.map(ind => {
+          {sortIndicators(indicators).map(ind => {
             const isUp = ind.changePercent >= 0;
             return (
               <div key={ind.type} className="bg-card rounded-lg border border-border p-3 hover:border-border/80 transition group">
@@ -122,4 +122,13 @@ export default function HomePage() {
       </div>
     </div>
   );
+}
+
+function sortIndicators(indicators: Indicator[]): Indicator[] {
+  const order = ['KOSPI', 'KOSDAQ', 'USD_KRW', 'SP500', 'BTC', 'GOLD'];
+  return [...indicators].sort((a, b) => {
+    const ai = order.indexOf(a.type);
+    const bi = order.indexOf(b.type);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
 }

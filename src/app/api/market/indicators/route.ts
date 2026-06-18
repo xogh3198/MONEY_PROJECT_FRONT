@@ -5,7 +5,7 @@ const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://15.164.171.43:8
 export async function GET() {
   try {
     const res = await fetch(`${NEWS_API}/api/market/indicators`, {
-      next: { revalidate: 60 }, // 60초 캐시
+      next: { revalidate: 30 }, // 30초 캐시
     });
     const data = await res.json();
     return NextResponse.json(data);
