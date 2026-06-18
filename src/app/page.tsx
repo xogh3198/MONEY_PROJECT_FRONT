@@ -43,6 +43,7 @@ export default function HomePage() {
             );
           })}
         </div>
+        )}
       </section>
 
       {/* 메인 그리드 */}
