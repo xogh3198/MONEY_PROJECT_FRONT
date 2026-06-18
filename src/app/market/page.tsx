@@ -113,7 +113,7 @@ export default function MarketPage() {
       {/* 마지막 갱신 시간 */}
       {selectedIndicator?.updatedAt && selectedIndicator.updatedAt !== 'loading' && (
         <div className="text-xs text-text-secondary text-center">
-          마지막 갱신: {new Date(selectedIndicator.updatedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
+          마지막 갱신: {formatKST(selectedIndicator.updatedAt)}
         </div>
       )}
 
@@ -177,4 +177,10 @@ function AIPrediction() {
       </p>
     </div>
   );
+}
+
+function formatKST(utcString: string): string {
+  const utc = new Date(utcString);
+  const kst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toLocaleString('ko-KR');
 }
