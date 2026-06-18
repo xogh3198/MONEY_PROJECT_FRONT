@@ -1,152 +1,92 @@
 'use client';
-import { useState } from 'react';
-
-interface PortfolioItem {
-  stockCode: string;
-  stockName: string;
-  quantity: number;
-  dividendPerShare: number;
-  exDividendDate: string;
-  paymentDate: string;
-}
-
-interface MonthlyDividend {
-  month: string;
-  totalPreTax: number;
-  totalAfterTax: number;
-}
-
-const MOCK_PORTFOLIO: PortfolioItem[] = [
-  { stockCode: '005930', stockName: '삼성전자', quantity: 100, dividendPerShare: 361, exDividendDate: '2026-06-25', paymentDate: '2026-07-15' },
-  { stockCode: '000660', stockName: 'SK하이닉스', quantity: 50, dividendPerShare: 1200, exDividendDate: '2026-06-25', paymentDate: '2026-07-20' },
-  { stockCode: '017670', stockName: 'SK텔레콤', quantity: 30, dividendPerShare: 3500, exDividendDate: '2026-03-28', paymentDate: '2026-04-15' },
-];
-
-const MOCK_MONTHLY: MonthlyDividend[] = [
-  { month: '2026-01', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-02', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-03', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-04', totalPreTax: 105000, totalAfterTax: 88830 },
-  { month: '2026-05', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-06', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-07', totalPreTax: 96100, totalAfterTax: 81301 },
-  { month: '2026-08', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-09', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-10', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-11', totalPreTax: 0, totalAfterTax: 0 },
-  { month: '2026-12', totalPreTax: 0, totalAfterTax: 0 },
-];
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export default function DividendPage() {
-  const [accountType, setAccountType] = useState<string>('GENERAL');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const totalAnnual = MOCK_MONTHLY.reduce((sum, m) => sum + m.totalAfterTax, 0);
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+    setLoading(false);
+  }, []);
+
+  if (loading) return <div className="text-center py-20 text-text-secondary">로딩 중...</div>;
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="text-5xl mb-4">🔒</div>
+        <h2 className="text-xl font-bold mb-2">로그인이 필요합니다</h2>
+        <p className="text-text-secondary mb-6">배당 관리 기능은 로그인 후 이용할 수 있습니다</p>
+        <Link href="/login" className="px-6 py-3 bg-accent text-black font-medium rounded-lg hover:opacity-90">
+          로그인하기
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-2">💰 배당금 관리</h1>
-      <p className="text-gray-500 mb-6">포트폴리오 배당 캘린더 & ISA 절세 최적화</p>
+      <h1 className="text-xl font-bold mb-6">💰 배당 관리</h1>
 
-      {/* 연간 요약 */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <SummaryCard label="연간 예상 배당 (세후)" value={`${totalAnnual.toLocaleString()}원`} />
-        <SummaryCard label="보유 종목" value={`${MOCK_PORTFOLIO.length}종목`} />
-        <SummaryCard label="ISA 비과세 잔여" value="1,829,869원" />
-        <SummaryCard label="다음 배당락일" value="06/25 (D-8)" />
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <StatCard label="연간 예상 배당" value="170,131원" />
+        <StatCard label="보유 종목" value="3종목" />
+        <StatCard label="ISA 비과세 잔여" value="1,829,869원" />
+        <StatCard label="다음 배당락일" value="D-8" />
       </div>
 
-      {/* 계좌 유형 선택 */}
-      <div className="flex gap-2 mb-6">
-        {[
-          { value: 'GENERAL', label: '일반 계좌 (15.4%)' },
-          { value: 'ISA_GENERAL', label: 'ISA 일반형 (비과세 200만)' },
-          { value: 'ISA_SPECIAL', label: 'ISA 서민형 (비과세 400만)' },
-          { value: 'IRP', label: 'IRP (과세이연)' },
-        ].map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setAccountType(opt.value)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              accountType === opt.value ? 'bg-blue-600 text-white' : 'bg-white border text-gray-700'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 월별 배당 캘린더 */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border mb-6">
-        <h2 className="font-bold text-lg mb-4">📅 월별 배당 캘린더 (2026)</h2>
-        <div className="grid grid-cols-6 gap-3">
-          {MOCK_MONTHLY.map(m => {
-            const monthNum = parseInt(m.month.split('-')[1]);
-            const hasDiv = m.totalAfterTax > 0;
-            return (
-              <div key={m.month} className={`p-3 rounded-lg text-center ${hasDiv ? 'bg-green-50 border-green-200 border' : 'bg-gray-50'}`}>
-                <div className="text-sm font-medium text-gray-600">{monthNum}월</div>
-                {hasDiv ? (
-                  <div className="text-sm font-bold text-positive mt-1">{m.totalAfterTax.toLocaleString()}원</div>
-                ) : (
-                  <div className="text-xs text-gray-400 mt-1">-</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 포트폴리오 목록 */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border">
+      <div className="bg-card rounded-lg border border-border p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="font-bold text-lg">📋 나의 포트폴리오</h2>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
-            + 종목 추가
-          </button>
+          <h2 className="font-bold">나의 포트폴리오</h2>
+          <button className="px-3 py-1.5 bg-accent text-black text-sm rounded hover:opacity-90">+ 종목 추가</button>
         </div>
-        <table className="w-full">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b-2 border-gray-100 text-sm text-gray-500">
-              <th className="py-3 text-left">종목</th>
-              <th className="py-3 text-right">수량</th>
-              <th className="py-3 text-right">주당배당</th>
-              <th className="py-3 text-right">예상배당(세전)</th>
-              <th className="py-3 text-right">배당락일</th>
-              <th className="py-3 text-right">지급일</th>
+            <tr className="text-text-secondary border-b border-border">
+              <th className="py-2 text-left">종목</th>
+              <th className="py-2 text-right">수량</th>
+              <th className="py-2 text-right">주당배당</th>
+              <th className="py-2 text-right">예상배당</th>
+              <th className="py-2 text-right">배당락일</th>
             </tr>
           </thead>
           <tbody>
-            {MOCK_PORTFOLIO.map(item => (
-              <tr key={item.stockCode} className="border-b border-gray-50 hover:bg-gray-50">
-                <td className="py-3">
-                  <div className="font-medium">{item.stockName}</div>
-                  <div className="text-xs text-gray-400">{item.stockCode}</div>
-                </td>
-                <td className="py-3 text-right">{item.quantity}주</td>
-                <td className="py-3 text-right">{item.dividendPerShare.toLocaleString()}원</td>
-                <td className="py-3 text-right font-medium">
-                  {(item.quantity * item.dividendPerShare).toLocaleString()}원
-                </td>
-                <td className="py-3 text-right text-sm">{item.exDividendDate}</td>
-                <td className="py-3 text-right text-sm">{item.paymentDate}</td>
-              </tr>
-            ))}
+            <PortfolioRow name="삼성전자" code="005930" qty={100} dividend={361} exDate="06/25" />
+            <PortfolioRow name="SK하이닉스" code="000660" qty={50} dividend={1200} exDate="06/25" />
+            <PortfolioRow name="SK텔레콤" code="017670" qty={30} dividend={3500} exDate="03/28" />
           </tbody>
         </table>
       </div>
 
-      <p className="text-center text-xs text-gray-400 mt-6">
-        ※ 본 정보는 투자 조언이 아니며, 투자 판단의 책임은 사용자에게 있습니다.
+      <p className="text-center text-xs text-text-secondary mt-8">
+        ※ 본 정보는 투자 조언이 아닙니다. 투자 판단의 책임은 사용자에게 있습니다.
       </p>
     </div>
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm border">
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
+    <div className="bg-card border border-border rounded-lg p-4">
+      <div className="text-xs text-text-secondary mb-1">{label}</div>
       <div className="text-lg font-bold">{value}</div>
     </div>
+  );
+}
+
+function PortfolioRow({ name, code, qty, dividend, exDate }: {
+  name: string; code: string; qty: number; dividend: number; exDate: string;
+}) {
+  return (
+    <tr className="border-b border-border/50 hover:bg-border/20">
+      <td className="py-3"><span className="font-medium">{name}</span><span className="text-text-secondary ml-2 text-xs">{code}</span></td>
+      <td className="py-3 text-right">{qty}주</td>
+      <td className="py-3 text-right">{dividend.toLocaleString()}원</td>
+      <td className="py-3 text-right text-accent">{(qty * dividend).toLocaleString()}원</td>
+      <td className="py-3 text-right text-text-secondary">{exDate}</td>
+    </tr>
   );
 }
