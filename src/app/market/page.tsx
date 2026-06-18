@@ -110,7 +110,7 @@ export default function MarketPage() {
       {/* 마지막 갱신 시간 */}
       {selectedIndicator?.updatedAt && selectedIndicator.updatedAt !== 'loading' && (
         <div className="text-xs text-text-secondary text-center">
-          마지막 갱신: {new Date(selectedIndicator.updatedAt).toLocaleString('ko-KR')}
+          마지막 갱신: {new Date(selectedIndicator.updatedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
         </div>
       )}
 
