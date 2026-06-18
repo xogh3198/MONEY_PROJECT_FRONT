@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { fetchIndicators, fetchHotNews } from '@/lib/api';
 
 interface Indicator { type: string; name: string; value: number; changePercent: number; }
-interface NewsItem { id: string; title: string; summary?: string; sourceName: string; publishedAt: string; commentCount: number; category: string; sentiment: string; viewCount?: number; }
+interface NewsItem { id: string; title: string; summary?: string; sourceName: string; publishedAt: string; commentCount: number; category: string; sentiment: string; viewCount?: number; sourceUrl?: string; }
 
 export default function HomePage() {
   const [indicators, setIndicators] = useState<Indicator[]>([]);
@@ -32,8 +32,8 @@ export default function HomePage() {
                 <div className="text-[16px] font-bold tracking-tight">
                   {ind.type === 'BTC' || ind.type === 'GOLD' ? `$${Math.round(ind.value).toLocaleString()}` : ind.value.toLocaleString(undefined, {maximumFractionDigits: 2})}
                 </div>
-                <div className={`text-[12px] font-semibold mt-0.5 ${isUp ? 'text-[#f85149]' : 'text-[#58a6ff]'}`}>
-                  {isUp ? '▲' : '▼'} {Math.abs(ind.changePercent).toFixed(2)}%
+                <div className={`text-[12px] font-semibold mt-0.5 ${isUp ? 'text-[#f85149]' : ind.changePercent < 0 ? 'text-[#58a6ff]' : 'text-text-secondary'}`}>
+                  {ind.changePercent === 0 ? '— 0.00%' : `${isUp ? '▲' : '▼'} ${Math.abs(ind.changePercent).toFixed(2)}%`}
                 </div>
               </div>
             );
@@ -51,7 +51,7 @@ export default function HomePage() {
           </div>
           <div className="divide-y divide-border/50">
             {news.slice(0, 10).map((item, idx) => (
-              <Link key={item.id} href="/forum" className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#1c2129] transition">
+              <a key={item.id} href={item.sourceUrl || '/forum'} target={item.sourceUrl ? '_blank' : '_self'} rel="noopener noreferrer" className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#1c2129] transition">
                 <span className={`flex-shrink-0 mt-1 text-xs font-bold w-5 text-center ${idx < 3 ? 'text-accent' : 'text-text-secondary'}`}>
                   {idx + 1}
                 </span>
@@ -74,7 +74,7 @@ export default function HomePage() {
                     <span>💬 {item.commentCount}</span>
                   </div>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </section>

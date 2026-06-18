@@ -5,7 +5,7 @@ type Category = 'ALL' | 'DOMESTIC' | 'OVERSEAS' | 'FOREX' | 'RATE' | 'CRYPTO';
 type TabType = 'hot' | 'realtime';
 
 interface Article {
-  id: string; title: string; summary: string; sourceName: string;
+  id: string; title: string; summary: string; sourceName: string; sourceUrl?: string;
   category: string; sentiment: string; viewCount: number;
   commentCount: number; positiveVotes: number; negativeVotes: number;
   publishedAt: string;
@@ -150,7 +150,9 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
   };
 
   return (
-    <div className="px-5 py-4 hover:bg-[#1c2129] transition cursor-pointer">
+    <div className="px-5 py-4 hover:bg-[#1c2129] transition cursor-pointer" onClick={() => {
+      if (article.sourceUrl && article.sourceUrl !== '#') window.open(article.sourceUrl, '_blank');
+    }}>
       <div className="flex items-center gap-2 mb-2 text-[11px]">
         {showRank && (
           <span className={`font-bold w-5 text-center ${rank <= 3 ? 'text-accent' : 'text-text-secondary'}`}>{rank}</span>
