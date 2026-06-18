@@ -23,6 +23,12 @@ export default function Navigation() {
     if (stored) setUser(JSON.parse(stored));
   }, []);
 
+  // 페이지 전환 시 로그인 상태 재확인
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    setUser(stored ? JSON.parse(stored) : null);
+  }, [pathname]);
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
