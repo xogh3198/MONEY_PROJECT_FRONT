@@ -107,6 +107,9 @@ export default function MarketPage() {
         )}
       </div>
 
+      {/* AI 예측 분석 */}
+      <AIPrediction />
+
       {/* 마지막 갱신 시간 */}
       {selectedIndicator?.updatedAt && selectedIndicator.updatedAt !== 'loading' && (
         <div className="text-xs text-text-secondary text-center">
@@ -115,6 +118,61 @@ export default function MarketPage() {
       )}
 
       <p className="text-center text-[11px] text-text-secondary mt-6">
+        ※ AI 분석 결과이며 투자 조언이 아닙니다. 투자 판단의 책임은 사용자에게 있습니다.
+      </p>
+    </div>
+  );
+}
+
+function AIPrediction() {
+  const [analysis, setAnalysis] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [updatedAt, setUpdatedAt] = useState('');
+
+  useEffect(() => {
+    loadPrediction();
+  }, []);
+
+  const loadPrediction = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/ai-prediction');
+      const data = await res.json();
+      setAnalysis(data.analysis);
+      setUpdatedAt(data.updatedAt);
+    } catch {
+      setAnalysis('AI 분석을 불러올 수 없습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-5 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-bold flex items-center gap-2">
+          <span className="text-lg">🤖</span> AI 시장 분석
+        </h2>
+        <button onClick={loadPrediction} className="text-xs text-accent-blue hover:underline">
+          새로고침
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-sm text-text-secondary animate-pulse">AI가 시장을 분석하고 있습니다...</div>
+      ) : (
+        <div className="text-sm text-text-primary leading-relaxed whitespace-pre-line">
+          {analysis}
+        </div>
+      )}
+
+      {updatedAt && (
+        <div className="mt-3 text-[11px] text-text-secondary">
+          분석 시각: {new Date(updatedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
+        </div>
+      )}
+
+      <p className="mt-3 text-[10px] text-text-secondary border-t border-border pt-2">
         ※ AI 분석 결과이며 투자 조언이 아닙니다. 투자 판단의 책임은 사용자에게 있습니다.
       </p>
     </div>
