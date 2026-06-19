@@ -13,12 +13,12 @@ interface Article {
 }
 
 const CATEGORIES: { value: Category; label: string }[] = [
-  { value: 'ALL', label: '전체' },
-  { value: 'DOMESTIC', label: '🇰🇷 국내증시' },
-  { value: 'OVERSEAS', label: '🇺🇸 해외증시' },
-  { value: 'FOREX', label: '💱 환율' },
-  { value: 'RATE', label: '📈 금리' },
-  { value: 'CRYPTO', label: '₿ 암호화폐' },
+  { value: 'ALL', label: '?�체' },
+  { value: 'DOMESTIC', label: '?��?�� �?��증시' },
+  { value: 'OVERSEAS', label: '?��?�� ?�외증시' },
+  { value: 'FOREX', label: '?�� ?�율' },
+  { value: 'RATE', label: '?�� 금리' },
+  { value: 'CRYPTO', label: '???�호?�폐' },
 ];
 
 export default function ForumPage() {
@@ -36,7 +36,7 @@ export default function ForumPage() {
     loadArticles(0);
   }, [tab, category]);
 
-  // 실시간 탭: 60초마다 자동 새로고침
+  // ?�시�??? 60초마???�동 ?�로고침
   useEffect(() => {
     if (tab !== 'realtime') return;
     const interval = setInterval(() => {
@@ -54,7 +54,7 @@ export default function ForumPage() {
         const res = await fetch(`/api/news-hot${params}`);
         const data = await res.json();
         setArticles(data || []);
-        setHasMore(false); // hot은 최대 10개
+        setHasMore(false); // hot?� 최�? 10�?
       } else {
         const params = new URLSearchParams({ page: String(pageNum), size: '10', sort: 'publishedAt,desc' });
         if (category !== 'ALL') params.set('category', category);
@@ -84,32 +84,32 @@ export default function ForumPage() {
     <div>
       <ForumTabs />
       <div className="mb-5">
-        <h1 className="text-xl font-bold">경제뉴스</h1>
+        <h1 className="text-xl font-bold">경제?�스</h1>
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-xs text-text-secondary">실시간 경제 뉴스와 시장 분석</p>
+          <p className="text-xs text-text-secondary">?�시�?경제 ?�스?� ?�장 분석</p>
           {tab === 'realtime' && (
-            <span className="text-[10px] text-accent animate-pulse">● LIVE</span>
+            <span className="text-[10px] text-accent animate-pulse">??LIVE</span>
           )}
         </div>
       </div>
 
-      {/* 인기/실시간 탭 */}
+      {/* ?�기/?�시�???*/}
       <div className="flex gap-1 mb-4">
         <button onClick={() => setTab('hot')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
             tab === 'hot' ? 'bg-accent text-black' : 'bg-card border border-border text-text-secondary hover:text-text-primary'
           }`}>
-          🔥 인기
+          ?�� ?�기
         </button>
         <button onClick={() => setTab('realtime')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
             tab === 'realtime' ? 'bg-accent text-black' : 'bg-card border border-border text-text-secondary hover:text-text-primary'
           }`}>
-          ⚡ 실시간
+          ???�시�?
         </button>
       </div>
 
-      {/* 카테고리 필터 */}
+      {/* 카테고리 ?�터 */}
       <div className="flex gap-1 mb-5 overflow-x-auto pb-1">
         {CATEGORIES.map(c => (
           <button key={c.value} onClick={() => setCategory(c.value)}
@@ -125,9 +125,9 @@ export default function ForumPage() {
 
       {/* 기사 목록 */}
       {loading && articles.length === 0 ? (
-        <div className="text-center py-12 text-text-secondary text-sm animate-pulse">불러오는 중...</div>
+        <div className="text-center py-12 text-text-secondary text-sm animate-pulse">불러?�는 �?..</div>
       ) : articles.length === 0 ? (
-        <div className="text-center py-12 text-text-secondary text-sm">뉴스가 없습니다</div>
+        <div className="text-center py-12 text-text-secondary text-sm">?�스가 ?�습?�다</div>
       ) : (
         <div className="bg-card rounded-lg border border-border overflow-hidden divide-y divide-border/50">
           {articles.map((article, idx) => (
@@ -136,21 +136,21 @@ export default function ForumPage() {
         </div>
       )}
 
-      {/* 더보기 버튼 (실시간 탭) */}
+      {/* ?�보�?버튼 (?�시�??? */}
       {tab === 'realtime' && hasMore && !loading && articles.length > 0 && (
         <div className="text-center mt-4">
           <button onClick={loadMore} className="px-6 py-2 bg-card border border-border rounded-lg text-sm text-text-secondary hover:text-text-primary transition">
-            더보기
+            ?�보�?
           </button>
         </div>
       )}
 
       {loading && articles.length > 0 && (
-        <div className="text-center py-4 text-text-secondary text-xs animate-pulse">로딩 중...</div>
+        <div className="text-center py-4 text-text-secondary text-xs animate-pulse">로딩 �?..</div>
       )}
 
       <p className="text-center text-[11px] text-text-secondary mt-8">
-        ※ 본 정보는 투자 조언이 아닙니다. 투자 판단의 책임은 사용자에게 있습니다.
+        ??�??�보???�자 조언???�닙?�다. ?�자 ?�단??책임?� ?�용?�에�??�습?�다.
       </p>
     </div>
   );
@@ -159,12 +159,12 @@ export default function ForumPage() {
 function ArticleRow({ article, rank, showRank }: { article: Article; rank: number; showRank: boolean }) {
   const sentimentLabel = {
     POSITIVE: { text: '긍정', color: 'text-[#f85149] bg-[#f85149]/10' },
-    NEGATIVE: { text: '부정', color: 'text-[#58a6ff] bg-[#58a6ff]/10' },
+    NEGATIVE: { text: '부??, color: 'text-[#58a6ff] bg-[#58a6ff]/10' },
     NEUTRAL: { text: '중립', color: 'text-text-secondary bg-border/50' },
   }[article.sentiment] || { text: '중립', color: 'text-text-secondary bg-border/50' };
 
   const categoryMap: Record<string, string> = {
-    DOMESTIC: '국내증시', OVERSEAS: '해외증시', FOREX: '환율', RATE: '금리', CRYPTO: '암호화폐',
+    DOMESTIC: '�?��증시', OVERSEAS: '?�외증시', FOREX: '?�율', RATE: '금리', CRYPTO: '?�호?�폐',
   };
 
   return (
@@ -182,7 +182,7 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
         <span className="text-border">·</span>
         <span className="text-text-secondary">{timeAgo(article.publishedAt)}</span>
         {showRank && (
-          <span className="text-[10px] text-text-secondary ml-1">👁 {article.viewCount.toLocaleString()}</span>
+          <span className="text-[10px] text-text-secondary ml-1">?�� {article.viewCount.toLocaleString()}</span>
         )}
         <span className={`ml-auto px-2 py-0.5 rounded text-[10px] font-medium ${sentimentLabel.color}`}>
           {sentimentLabel.text}
@@ -194,17 +194,17 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
       <h3 className="text-[14px] font-semibold text-text-primary mb-1 leading-snug">
         {article.title}
         {article.sourceUrl && !article.sourceUrl.includes('example.com') && article.sourceUrl !== '#' && (
-          <span className="text-accent-blue ml-1 text-[10px]">↗</span>
+          <span className="text-accent-blue ml-1 text-[10px]">??/span>
         )}
       </h3>
       {article.summary && (
         <p className="text-[12px] text-text-secondary leading-relaxed mb-2 line-clamp-2">{article.summary}</p>
       )}
       <div className="flex items-center gap-4 text-[11px] text-text-secondary">
-        <span>👁 {article.viewCount.toLocaleString()}</span>
-        <span>💬 {article.commentCount}</span>
-        <span className="text-[#f85149]">👍 {article.positiveVotes}</span>
-        <span className="text-[#58a6ff]">👎 {article.negativeVotes}</span>
+        <span>?�� {article.viewCount.toLocaleString()}</span>
+        <span>?�� {article.commentCount}</span>
+        <span className="text-[#f85149]">?�� {article.positiveVotes}</span>
+        <span className="text-[#58a6ff]">?�� {article.negativeVotes}</span>
       </div>
     </div>
   );
@@ -214,7 +214,7 @@ function timeAgo(dateStr: string): string {
   if (!dateStr) return '';
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
   if (diff < 1) return '방금';
-  if (diff < 60) return `${diff}분 전`;
-  if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
-  return `${Math.floor(diff / 1440)}일 전`;
+  if (diff < 60) return `${diff}�???;
+  if (diff < 1440) return `${Math.floor(diff / 60)}?�간 ??;
+  return `${Math.floor(diff / 1440)}????;
 }

@@ -17,7 +17,7 @@ export default function VoteButton({ postId, likeCount, dislikeCount, userVote: 
   const handleVote = async (voteType: 'LIKE' | 'DISLIKE') => {
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('로그인이 필요합니다');
+      alert('로그?�이 ?�요?�니??);
       return;
     }
     if (loading) return;
@@ -52,7 +52,7 @@ export default function VoteButton({ postId, likeCount, dislikeCount, userVote: 
             : 'bg-card border border-border text-text-secondary hover:text-text-primary'
         }`}
       >
-        👍 {likes}
+        ?�� {likes}
       </button>
       <button
         onClick={() => handleVote('DISLIKE')}
@@ -63,7 +63,7 @@ export default function VoteButton({ postId, likeCount, dislikeCount, userVote: 
             : 'bg-card border border-border text-text-secondary hover:text-text-primary'
         }`}
       >
-        👎 {dislikes}
+        ?�� {dislikes}
       </button>
     </div>
   );

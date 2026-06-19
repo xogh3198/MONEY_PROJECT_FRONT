@@ -20,17 +20,17 @@ export default function DividendPage() {
   }, []);
 
   if (authChecking) {
-    return <div className="text-center py-20 text-text-secondary">로딩 중...</div>;
+    return <div className="text-center py-20 text-text-secondary">로딩 �?..</div>;
   }
 
   if (!isLoggedIn) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="text-5xl mb-4">🔒</div>
-        <h2 className="text-xl font-bold mb-2">로그인이 필요합니다</h2>
-        <p className="text-text-secondary mb-6">배당 관리 기능은 로그인 후 이용할 수 있습니다</p>
+        <div className="text-5xl mb-4">?��</div>
+        <h2 className="text-xl font-bold mb-2">로그?�이 ?�요?�니??/h2>
+        <p className="text-text-secondary mb-6">배당 관�?기능?� 로그?????�용?????�습?�다</p>
         <Link href="/login" className="px-6 py-3 bg-accent text-black font-medium rounded-lg hover:opacity-90">
-          로그인하기
+          로그?�하�?
         </Link>
       </div>
     );
@@ -94,7 +94,7 @@ function DividendContent({
   if (loading) {
     return (
       <div>
-        <h1 className="text-xl font-bold mb-6">💰 배당 관리</h1>
+        <h1 className="text-xl font-bold mb-6">?�� 배당 관�?/h1>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-card border border-border rounded-lg p-4 animate-pulse">
@@ -117,7 +117,7 @@ function DividendContent({
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-6">💰 배당 관리</h1>
+      <h1 className="text-xl font-bold mb-6">?�� 배당 관�?/h1>
 
       {error && (
         <div className="bg-negative/10 border border-negative/30 text-negative rounded-lg p-3 mb-4 text-sm">
@@ -126,25 +126,25 @@ function DividendContent({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard label="연간 예상 배당" value={`${totalExpectedDividend.toLocaleString()}원`} />
+        <StatCard label="?�간 ?�상 배당" value={`${totalExpectedDividend.toLocaleString()}??} />
         <StatCard label="보유 종목" value={`${totalStocks}종목`} />
-        <StatCard label="다음 배당락일" value={nearestDN !== null ? `D-${nearestDN}` : '-'} />
+        <StatCard label="?�음 배당?�일" value={nearestDN !== null ? `D-${nearestDN}` : '-'} />
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="font-bold text-text-primary">나의 포트폴리오</h2>
+          <h2 className="font-bold text-text-primary">?�의 ?�트?�리??/h2>
           <button
             onClick={() => setShowAddModal(true)}
             className="px-3 py-1.5 bg-accent text-black text-sm font-medium rounded hover:opacity-90"
           >
-            + 종목 추가
+            + 종목 추�?
           </button>
         </div>
 
         {portfolios.length === 0 ? (
           <p className="text-center text-text-secondary py-8">
-            등록된 종목이 없습니다. 종목을 추가해보세요.
+            ?�록??종목???�습?�다. 종목??추�??�보?�요.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -152,11 +152,11 @@ function DividendContent({
               <thead>
                 <tr className="text-text-secondary border-b border-border">
                   <th className="py-2 text-left">종목</th>
-                  <th className="py-2 text-right">수량</th>
+                  <th className="py-2 text-right">?�량</th>
                   <th className="py-2 text-right">주당배당</th>
-                  <th className="py-2 text-right">예상배당</th>
-                  <th className="py-2 text-right">배당락일</th>
-                  <th className="py-2 text-right">관리</th>
+                  <th className="py-2 text-right">?�상배당</th>
+                  <th className="py-2 text-right">배당?�일</th>
+                  <th className="py-2 text-right">관�?/th>
                 </tr>
               </thead>
               <tbody>
@@ -166,12 +166,12 @@ function DividendContent({
                       <span className="font-medium text-text-primary">{item.stockName}</span>
                       <span className="text-text-secondary ml-2 text-xs">{item.stockCode}</span>
                     </td>
-                    <td className="py-3 text-right text-text-primary">{item.quantity}주</td>
+                    <td className="py-3 text-right text-text-primary">{item.quantity}�?/td>
                     <td className="py-3 text-right text-text-primary">
-                      {Number(item.dividendPerShare).toLocaleString()}원
+                      {Number(item.dividendPerShare).toLocaleString()}??
                     </td>
                     <td className="py-3 text-right text-accent">
-                      {Number(item.expectedDividend).toLocaleString()}원
+                      {Number(item.expectedDividend).toLocaleString()}??
                     </td>
                     <td className="py-3 text-right text-text-secondary">
                       {item.exDividendDate
@@ -186,7 +186,7 @@ function DividendContent({
                         onClick={() => setEditingStock(item)}
                         className="text-text-secondary hover:text-accent text-xs mr-2"
                       >
-                        수정
+                        ?�정
                       </button>
                       {deleteConfirmId === item.id ? (
                         <span className="text-xs">
@@ -194,7 +194,7 @@ function DividendContent({
                             onClick={() => handleDelete(item.id)}
                             className="text-negative mr-1"
                           >
-                            확인
+                            ?�인
                           </button>
                           <button
                             onClick={() => setDeleteConfirmId(null)}
@@ -208,7 +208,7 @@ function DividendContent({
                           onClick={() => setDeleteConfirmId(item.id)}
                           className="text-text-secondary hover:text-negative text-xs"
                         >
-                          삭제
+                          ??��
                         </button>
                       )}
                     </td>
@@ -223,7 +223,7 @@ function DividendContent({
       <NotificationSettings />
 
       <p className="text-center text-xs text-text-secondary mt-8">
-        ※ 본 정보는 투자 조언이 아닙니다. 투자 판단의 책임은 사용자에게 있습니다.
+        ??�??�보???�자 조언???�닙?�다. ?�자 ?�단??책임?� ?�용?�에�??�습?�다.
       </p>
 
       <AddStockModal

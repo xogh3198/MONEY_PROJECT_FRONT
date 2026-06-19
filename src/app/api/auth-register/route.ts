@@ -13,6 +13,6 @@ export async function POST(request: NextRequest) {
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch {
-    return NextResponse.json({ error: '서버 연결 실패' }, { status: 500 });
+    return NextResponse.json({ error: '?�버 ?�결 ?�패' }, { status: 500 });
   }
 }

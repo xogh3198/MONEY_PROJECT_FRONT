@@ -4,12 +4,12 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
-  { href: '/', label: '홈', icon: '🏠' },
-  { href: '/forum', label: '뉴스', icon: '📰' },
-  { href: '/market', label: '시장', icon: '📊' },
-  { href: '/calendar', label: '캘린더', icon: '📅' },
-  { href: '/tools', label: '도구', icon: '🛠' },
-  { href: '/dividend', label: '배당', icon: '💰' },
+  { href: '/', label: '??, icon: '?��' },
+  { href: '/forum', label: '?�스', icon: '?��' },
+  { href: '/market', label: '?�장', icon: '?��' },
+  { href: '/calendar', label: '캘린??, icon: '?��' },
+  { href: '/tools', label: '?�구', icon: '?��' },
+  { href: '/dividend', label: '배당', icon: '?��' },
 ];
 
 export default function Navigation() {
@@ -23,7 +23,7 @@ export default function Navigation() {
     if (stored) setUser(JSON.parse(stored));
   }, []);
 
-  // 페이지 전환 시 로그인 상태 재확인
+  // ?�이지 ?�환 ??로그???�태 ?�확??
   useEffect(() => {
     const stored = localStorage.getItem('user');
     setUser(stored ? JSON.parse(stored) : null);
@@ -38,10 +38,10 @@ export default function Navigation() {
 
   return (
     <>
-      {/* 데스크톱 상단 네비 */}
+      {/* ?�스?�톱 ?�단 ?�비 */}
       <header className="bg-card border-b border-border sticky top-0 z-50 hidden md:block">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-12">
-          <Link href="/" className="text-lg font-bold text-accent">MoneyForum</Link>
+          <Link href="/" className="text-lg font-bold text-accent">InvestBoard</Link>
 
           <nav className="flex items-center gap-1">
             {NAV_ITEMS.map(item => (
@@ -60,30 +60,30 @@ export default function Navigation() {
             ) : user ? (
               <>
                 <span className="text-xs text-text-secondary">{user.nickname || user.email}</span>
-                <button onClick={logout} className="text-xs text-text-secondary hover:text-negative">로그아웃</button>
+                <button onClick={logout} className="text-xs text-text-secondary hover:text-negative">로그?�웃</button>
               </>
             ) : (
               <Link href="/login" className="px-3 py-1.5 bg-accent text-black text-sm font-medium rounded hover:opacity-90">
-                로그인
+                로그??
               </Link>
             )}
           </div>
         </div>
       </header>
 
-      {/* 모바일 상단 헤더 (간소화) */}
+      {/* 모바???�단 ?�더 (간소?? */}
       <header className="bg-card border-b border-border sticky top-0 z-50 md:hidden">
         <div className="px-4 flex items-center justify-between h-11">
-          <Link href="/" className="text-base font-bold text-accent">MoneyForum</Link>
+          <Link href="/" className="text-base font-bold text-accent">InvestBoard</Link>
           {!mounted ? null : user ? (
-            <button onClick={logout} className="text-xs text-text-secondary">로그아웃</button>
+            <button onClick={logout} className="text-xs text-text-secondary">로그?�웃</button>
           ) : (
-            <Link href="/login" className="text-xs text-accent font-medium">로그인</Link>
+            <Link href="/login" className="text-xs text-accent font-medium">로그??/Link>
           )}
         </div>
       </header>
 
-      {/* 모바일 하단 탭바 */}
+      {/* 모바???�단 ??�� */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
         <div className="flex justify-around py-1.5">
           {NAV_ITEMS.slice(0, 5).map(item => (

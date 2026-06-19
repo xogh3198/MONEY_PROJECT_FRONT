@@ -14,6 +14,6 @@ export async function GET(request: NextRequest) {
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch {
-    return NextResponse.json({ error: '서버 연결 실패' }, { status: 503 });
+    return NextResponse.json({ error: '?�버 ?�결 ?�패' }, { status: 503 });
   }
 }

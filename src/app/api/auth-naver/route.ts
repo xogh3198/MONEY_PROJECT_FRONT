@@ -8,54 +8,54 @@ export async function POST(request: NextRequest) {
   const { code, state } = await request.json();
 
   if (!code) {
-    return NextResponse.json({ error: '인증 코드가 없습니다' }, { status: 400 });
+    return NextResponse.json({ error: '?�증 코드가 ?�습?�다' }, { status: 400 });
   }
 
   try {
-    // 1. 네이버에서 access_token 발급
+    // 1. ?�이버에??access_token 발급
     const tokenUrl = `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${NAVER_CLIENT_ID}&client_secret=${NAVER_CLIENT_SECRET}&code=${code}&state=${state}`;
     const tokenRes = await fetch(tokenUrl);
     const tokenData = await tokenRes.json();
 
     if (tokenData.error) {
       console.error('Naver token error:', tokenData);
-      return NextResponse.json({ error: '네이버 인증에 실패했습니다' }, { status: 401 });
+      return NextResponse.json({ error: '?�이�??�증???�패?�습?�다' }, { status: 401 });
     }
 
-    // 2. 네이버 사용자 프로필 조회
+    // 2. ?�이�??�용???�로??조회
     const profileRes = await fetch('https://openapi.naver.com/v1/nid/me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const profileData = await profileRes.json();
 
     if (profileData.resultcode !== '00') {
-      return NextResponse.json({ error: '프로필 조회에 실패했습니다' }, { status: 401 });
+      return NextResponse.json({ error: '?�로??조회???�패?�습?�다' }, { status: 401 });
     }
 
     const naverUser = profileData.response;
     // naverUser: { id, nickname, email, name, ... }
 
-    // 3. 백엔드에 네이버 사용자 정보 전달하여 로그인/회원가입 처리
+    // 3. 백엔?�에 ?�이�??�용???�보 ?�달?�여 로그???�원가??처리
     const res = await fetch(`${ENGINE_API}/api/auth/naver`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         naverId: naverUser.id,
         email: naverUser.email || '',
-        nickname: naverUser.nickname || naverUser.name || '네이버사용자',
+        nickname: naverUser.nickname || naverUser.name || '?�이버사?�자',
       }),
     });
 
     if (!res.ok) {
       const errorText = await res.text();
       console.error('Backend naver auth error:', res.status, errorText);
-      return NextResponse.json({ error: `백엔드 인증 실패 (${res.status})` }, { status: res.status });
+      return NextResponse.json({ error: `백엔???�증 ?�패 (${res.status})` }, { status: res.status });
     }
 
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (error: any) {
     console.error('Naver auth error:', error?.message || error);
-    return NextResponse.json({ error: '네이버 로그인 처리 중 오류가 발생했습니다' }, { status: 500 });
+    return NextResponse.json({ error: '?�이�?로그??처리 �??�류가 발생?�습?�다' }, { status: 500 });
   }
 }

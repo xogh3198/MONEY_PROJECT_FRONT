@@ -37,11 +37,11 @@ export default function NotificationSettings() {
 
   return (
     <div className="bg-card border border-border rounded-lg p-6">
-      <h2 className="font-bold text-text-primary mb-4">🔔 알림 설정</h2>
+      <h2 className="font-bold text-text-primary mb-4">?�� ?�림 ?�정</h2>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-text-primary">알림 활성화</span>
+          <span className="text-sm text-text-primary">?�림 ?�성??/span>
           <button
             onClick={toggleEnabled}
             className={`relative w-11 h-6 rounded-full transition-colors ${
@@ -58,7 +58,7 @@ export default function NotificationSettings() {
 
         {preferences.enabled && (
           <div className="border-t border-border pt-4 space-y-3">
-            <p className="text-xs text-text-secondary mb-2">배당락일 알림 타이밍</p>
+            <p className="text-xs text-text-secondary mb-2">배당?�일 ?�림 ?�?�밍</p>
 
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -67,7 +67,7 @@ export default function NotificationSettings() {
                 onChange={() => toggleTiming('alertTimingD7')}
                 className="w-4 h-4 rounded border-border accent-accent"
               />
-              <span className="text-sm text-text-primary">D-7 (7일 전)</span>
+              <span className="text-sm text-text-primary">D-7 (7????</span>
             </label>
 
             <label className="flex items-center gap-3 cursor-pointer">
@@ -77,7 +77,7 @@ export default function NotificationSettings() {
                 onChange={() => toggleTiming('alertTimingD3')}
                 className="w-4 h-4 rounded border-border accent-accent"
               />
-              <span className="text-sm text-text-primary">D-3 (3일 전)</span>
+              <span className="text-sm text-text-primary">D-3 (3????</span>
             </label>
 
             <label className="flex items-center gap-3 cursor-pointer">
@@ -87,7 +87,7 @@ export default function NotificationSettings() {
                 onChange={() => toggleTiming('alertTimingD1')}
                 className="w-4 h-4 rounded border-border accent-accent"
               />
-              <span className="text-sm text-text-primary">D-1 (1일 전)</span>
+              <span className="text-sm text-text-primary">D-1 (1????</span>
             </label>
           </div>
         )}
