@@ -11,6 +11,15 @@ export default function MarketPage() {
   const [indicators, setIndicators] = useState<Indicator[]>([]);
   const [selected, setSelected] = useState('KOSPI');
   const [history, setHistory] = useState<{date: string; value: number}[]>([]);
+  const [interval, setInterval2] = useState('1d');
+
+  const INTERVALS = [
+    { key: '1m', label: '1분' },
+    { key: '5m', label: '5분' },
+    { key: '15m', label: '15분' },
+    { key: '1h', label: '1시간' },
+    { key: '1d', label: '1일' },
+  ];
 
   useEffect(() => {
     loadData();
@@ -19,8 +28,8 @@ export default function MarketPage() {
   }, []);
 
   useEffect(() => {
-    loadHistory(selected);
-  }, [selected]);
+    loadHistory(selected, interval);
+  }, [selected, interval]);
 
   const loadData = async () => {
     try {
@@ -32,12 +41,14 @@ export default function MarketPage() {
     } catch {}
   };
 
-  const loadHistory = async (type: string) => {
+  const loadHistory = async (type: string, intv: string) => {
     try {
-      const res = await fetch(`/api/market-history?type=${type}&days=30`);
+      const days = intv === '1m' ? 1 : intv === '5m' ? 5 : intv === '15m' ? 5 : intv === '1h' ? 7 : 30;
+      const res = await fetch(`/api/market-history?type=${type}&days=${days}&interval=${intv}`);
       const data = await res.json();
       if (data?.length) setHistory(data);
-    } catch {}
+      else setHistory([]);
+    } catch { setHistory([]); }
   };
 
   const selectedIndicator = indicators.find(i => i.type === selected);
@@ -74,17 +85,33 @@ export default function MarketPage() {
       {/* 차트 */}
       <div className="bg-card border border-border rounded-lg p-5 mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="font-bold">{selectedIndicator?.name || ''} 추이 (30일)</h2>
-          {selectedIndicator && (
-            <span className={`px-2 py-1 rounded text-xs font-medium ${
-              selectedIndicator.prediction === 'UP' ? 'bg-[#f85149]/10 text-[#f85149]' :
-              selectedIndicator.prediction === 'DOWN' ? 'bg-[#58a6ff]/10 text-[#58a6ff]' :
-              'bg-border text-text-secondary'
-            }`}>
-              {selectedIndicator.prediction === 'UP' ? '📈 상승 예상' :
-               selectedIndicator.prediction === 'DOWN' ? '📉 하락 예상' : '➡️ 보합'}
-            </span>
-          )}
+          <h2 className="font-bold">{selectedIndicator?.name || ''} 추이</h2>
+          <div className="flex items-center gap-2">
+            {selectedIndicator && (
+              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                selectedIndicator.prediction === 'UP' ? 'bg-[#f85149]/10 text-[#f85149]' :
+                selectedIndicator.prediction === 'DOWN' ? 'bg-[#58a6ff]/10 text-[#58a6ff]' :
+                'bg-border text-text-secondary'
+              }`}>
+                {selectedIndicator.prediction === 'UP' ? '📈 상승 예상' :
+                 selectedIndicator.prediction === 'DOWN' ? '📉 하락 예상' : '➡️ 보합'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 시간 간격 선택 */}
+        <div className="flex gap-1 mb-4">
+          {INTERVALS.map(intv => (
+            <button key={intv.key} onClick={() => setInterval2(intv.key)}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition ${
+                interval === intv.key
+                  ? 'bg-accent text-black'
+                  : 'bg-card border border-border text-text-secondary hover:text-text-primary'
+              }`}>
+              {intv.label}
+            </button>
+          ))}
         </div>
         {history.length > 0 ? (
           <ResponsiveContainer width="100%" height={280}>
@@ -96,7 +123,7 @@ export default function MarketPage() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-              <XAxis dataKey="date" fontSize={11} stroke="#8b949e" tickFormatter={d => d.substring(5)} />
+              <XAxis dataKey="date" fontSize={11} stroke="#8b949e" tickFormatter={d => interval === '1d' ? d.substring(5) : d.substring(11, 16)} />
               <YAxis fontSize={11} stroke="#8b949e" domain={['auto', 'auto']} />
               <Tooltip contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 12 }} />
               <Area type="monotone" dataKey="value" stroke="#58a6ff" fill="url(#grad)" strokeWidth={2} />
