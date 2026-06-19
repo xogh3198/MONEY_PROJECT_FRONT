@@ -1,6 +1,7 @@
-import './globals.css';
+﻿import './globals.css';
 import type { Metadata } from 'next';
 import Navigation from '@/components/Navigation';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   title: 'InvestBoard | 실시간 경제 뉴스 & AI 시장 예측',
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="max-w-7xl mx-auto px-4 py-6 pb-20 md:pb-6">
           {children}
         </main>
+        <Analytics />
       </body>
     </html>
   );
