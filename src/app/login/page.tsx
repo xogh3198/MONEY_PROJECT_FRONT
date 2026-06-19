@@ -63,14 +63,14 @@ export default function LoginPage() {
         window.location.href = '/';
       }
     } catch {
-      setError('서버 연결에 실패했습니다. 잠시 후 다시 시도하세요.');
+      setError('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleKakaoLogin = () => {
-    alert('카카오 로그인은 카카오 앱 등록 후 사용 가능합니다.\n(Kakao Developers에서 앱 등록 필요)');
+    alert('카카오 로그인은 준비 중입니다.');
   };
 
   return (
@@ -177,15 +177,23 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        {/* 카카오 로그인 */}
-        <button onClick={handleKakaoLogin}
-          className="w-full py-3 bg-[#FEE500] text-[#3C1E1E] font-medium rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2 text-sm">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#3C1E1E" d="M9 1C4.58 1 1 3.79 1 7.21c0 2.17 1.45 4.08 3.64 5.18-.16.57-.58 2.07-.67 2.39-.1.39.14.39.3.28.12-.08 1.94-1.32 2.73-1.86.64.09 1.3.14 1.99.14 4.42 0 8-2.79 8-6.21C17 3.79 13.42 1 9 1"/></svg>
-          카카오로 시작하기
-        </button>
+        {/* 소셜 로그인 */}
+        <div className="space-y-2">
+          <button onClick={handleKakaoLogin}
+            className="w-full py-3 bg-[#FEE500] text-[#3C1E1E] font-medium rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2 text-sm">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#3C1E1E" d="M9 1C4.58 1 1 3.79 1 7.21c0 2.17 1.45 4.08 3.64 5.18-.16.57-.58 2.07-.67 2.39-.1.39.14.39.3.28.12-.08 1.94-1.32 2.73-1.86.64.09 1.3.14 1.99.14 4.42 0 8-2.79 8-6.21C17 3.79 13.42 1 9 1"/></svg>
+            카카오로 시작하기
+          </button>
+
+          <button onClick={() => alert('네이버 로그인은 네이버 개발자센터 앱 등록 후 사용 가능합니다.')}
+            className="w-full py-3 bg-[#03C75A] text-white font-medium rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2 text-sm">
+            <span className="font-bold text-base">N</span>
+            네이버로 시작하기
+          </button>
+        </div>
 
         <p className="text-center text-[11px] text-text-secondary mt-6">
-          테스트: admin@money.com / admin1234
+          로그인 시 이용약관 및 개인정보처리방침에 동의합니다.
         </p>
       </div>
     </div>

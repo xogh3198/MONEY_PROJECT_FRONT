@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
-  } catch {
-    return NextResponse.json({ error: '서버 연결 실패' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Auth login error:', error?.message || error);
+    return NextResponse.json({ error: '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.' }, { status: 503 });
   }
 }
