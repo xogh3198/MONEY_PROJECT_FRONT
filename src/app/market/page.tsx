@@ -123,7 +123,15 @@ export default function MarketPage() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-              <XAxis dataKey="date" fontSize={11} stroke="#8b949e" tickFormatter={d => interval === '1d' ? d.substring(5) : d.substring(11, 16)} />
+              <XAxis dataKey="date" fontSize={11} stroke="#8b949e" tickFormatter={d => {
+                if (!d) return '';
+                if (interval === '1d') return d.length >= 10 ? d.substring(5, 10) : d;
+                // For intraday: find time portion after 'T' or at index 11
+                const tIdx = d.indexOf('T');
+                if (tIdx >= 0) return d.substring(tIdx + 1, tIdx + 6);
+                if (d.length >= 16) return d.substring(11, 16);
+                return d;
+              }} />
               <YAxis fontSize={11} stroke="#8b949e" domain={['auto', 'auto']} />
               <Tooltip contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 12 }} />
               <Area type="monotone" dataKey="value" stroke="#58a6ff" fill="url(#grad)" strokeWidth={2} />
