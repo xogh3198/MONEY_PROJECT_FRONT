@@ -55,11 +55,18 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        setError(data.error || '로그인에 실패했습니다');
+        setError(data.error || '처리에 실패했습니다');
+      } else if (tab === 'register') {
+        // 회원가입 성공 → 로그인 탭으로 전환
+        setTab('login');
+        setError('');
+        setConfirmPassword('');
+        setNickname('');
+        alert('회원가입이 완료되었습니다. 로그인해주세요.');
       } else {
+        // 로그인 성공
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data));
-        // 강제 새로고침으로 Navigation 상태 갱신
         window.location.href = '/';
       }
     } catch {
