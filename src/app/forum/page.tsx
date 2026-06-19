@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import ForumTabs from '@/components/forum/ForumTabs';
 
 type Category = 'ALL' | 'DOMESTIC' | 'OVERSEAS' | 'FOREX' | 'RATE' | 'CRYPTO';
 type TabType = 'hot' | 'realtime';
@@ -81,6 +82,7 @@ export default function ForumPage() {
 
   return (
     <div>
+      <ForumTabs />
       <div className="mb-5">
         <h1 className="text-xl font-bold">경제뉴스</h1>
         <div className="flex items-center gap-2 mt-1">
