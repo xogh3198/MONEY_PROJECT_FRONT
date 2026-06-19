@@ -7,13 +7,13 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const res = await fetch(`${NEWS_API}/api/market/indicators`, {
-      cache: 'no-store', // ?�시�???캐시 ?�음
+      cache: 'no-store', // 실시간 — 캐시 없음
     });
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json([
-      { type: 'KOSPI', name: '코스??, value: 0, changePercent: 0, prediction: 'NEUTRAL', updatedAt: 'error' },
+      { type: 'KOSPI', name: '코스피', value: 0, changePercent: 0, prediction: 'NEUTRAL', updatedAt: 'error' },
     ], { status: 200 });
   }
 }

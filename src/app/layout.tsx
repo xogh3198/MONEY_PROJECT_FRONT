@@ -3,12 +3,12 @@ import type { Metadata } from 'next';
 import Navigation from '@/components/Navigation';
 
 export const metadata: Metadata = {
-  title: 'InvestBoard | ?�시�?경제 ?�스 & AI ?�장 ?�측',
-  description: '코스?? 코스?? ?�율, 비트코인 ?�시�?지?��? AI ?�장 ?�측. 경제 ?�스 ?�럼?�서 ?�자?�들�??�장??분석?�세?? 배당�?캘린??& ISA ?�세 최적??',
-  keywords: ['경제?�스', '코스??, '주식', '?�율', '비트코인', '배당�?, 'ISA', '?�자', '?�장?�측', 'AI분석'],
+  title: 'InvestBoard | 실시간 경제 뉴스 & AI 시장 예측',
+  description: '코스피, 코스닥, 환율, 비트코인 실시간 지표와 AI 시장 예측. 경제 뉴스 포럼에서 투자자들과 시장을 분석하세요. 배당금 캘린더 & ISA 절세 최적화.',
+  keywords: ['경제뉴스', '코스피', '주식', '환율', '비트코인', '배당금', 'ISA', '투자', '시장예측', 'AI분석'],
   openGraph: {
-    title: 'InvestBoard | ?�시�?경제 ?�스 & AI ?�장 ?�측',
-    description: '코스?�·환?�·비?�코???�시�?지?? AI ?�장 분석. 경제 ?�럼?�서 ?�자?�들�??�통?�세??',
+    title: 'InvestBoard | 실시간 경제 뉴스 & AI 시장 예측',
+    description: '코스피·환율·비트코인 실시간 지표. AI 시장 분석. 경제 포럼에서 투자자들과 소통하세요.',
     url: 'https://investboard.cloud',
     siteName: 'InvestBoard',
     type: 'website',
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'InvestBoard | ?�시�?경제 ?�스 & AI ?�장 ?�측',
-    description: '코스?�·환?�·비?�코???�시�?지?? AI ?�장 분석. ?�자?��? ?�한 종합 ?�랫??',
+    title: 'InvestBoard | 실시간 경제 뉴스 & AI 시장 예측',
+    description: '코스피·환율·비트코인 실시간 지표. AI 시장 분석. 투자자를 위한 종합 플랫폼.',
   },
   robots: { index: true, follow: true },
   alternates: { canonical: 'https://investboard.cloud' },

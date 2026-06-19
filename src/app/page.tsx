@@ -20,11 +20,11 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      {/* ?�장 지??*/}
+      {/* 시장 지표 */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-text-secondary">?�시�??�장지??/h2>
-          <Link href="/market" className="text-xs text-accent-blue hover:underline">?�세 ??/Link>
+          <h2 className="text-sm font-semibold text-text-secondary">실시간 시장지표</h2>
+          <Link href="/market" className="text-xs text-accent-blue hover:underline">상세 →</Link>
         </div>
         {loadingIndicators ? <IndicatorSkeleton /> : (
         <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -37,7 +37,7 @@ export default function HomePage() {
                   {ind.type === 'BTC' || ind.type === 'GOLD' ? `$${Math.round(ind.value).toLocaleString()}` : ind.value.toLocaleString(undefined, {maximumFractionDigits: 2})}
                 </div>
                 <div className={`text-[12px] font-semibold mt-0.5 ${isUp ? 'text-[#f85149]' : ind.changePercent < 0 ? 'text-[#58a6ff]' : 'text-text-secondary'}`}>
-                  {ind.changePercent === 0 ? '??0.00%' : `${isUp ? '?? : '??} ${Math.abs(ind.changePercent).toFixed(2)}%`}
+                  {ind.changePercent === 0 ? '— 0.00%' : `${isUp ? '▲' : '▼'} ${Math.abs(ind.changePercent).toFixed(2)}%`}
                 </div>
               </div>
             );
@@ -46,13 +46,13 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* 메인 그리??*/}
+      {/* 메인 그리드 */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-        {/* ?�스 */}
+        {/* 뉴스 */}
         <section className="bg-card rounded-lg border border-border overflow-hidden">
           <div className="px-5 py-3 border-b border-border flex justify-between items-center">
-            <h2 className="text-sm font-bold">?�� ?�시�?경제?�스</h2>
-            <Link href="/forum" className="text-xs text-accent-blue hover:underline">?�체보기 ??/Link>
+            <h2 className="text-sm font-bold">🔥 실시간 경제뉴스</h2>
+            <Link href="/forum" className="text-xs text-accent-blue hover:underline">전체보기 →</Link>
           </div>
           <div className="divide-y divide-border/50">
             {news.slice(0, 10).map((item, idx) => (
@@ -75,8 +75,8 @@ export default function HomePage() {
                     <span>{item.sourceName}</span>
                     <span>·</span>
                     <span>{item.category}</span>
-                    {item.viewCount ? <span className="ml-auto">?�� {item.viewCount.toLocaleString()}</span> : null}
-                    <span>?�� {item.commentCount}</span>
+                    {item.viewCount ? <span className="ml-auto">👁 {item.viewCount.toLocaleString()}</span> : null}
+                    <span>💬 {item.commentCount}</span>
                   </div>
                 </div>
               </a>
@@ -84,57 +84,57 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ?�이?�바 */}
+        {/* 사이드바 */}
         <aside className="space-y-4">
-          {/* 빠른 ?�세??*/}
+          {/* 빠른 액세스 */}
           <div className="bg-card rounded-lg border border-border overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
-              <h3 className="text-sm font-bold">?�구</h3>
+              <h3 className="text-sm font-bold">도구</h3>
             </div>
             <div className="p-3 space-y-1">
               <Link href="/market" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
-                <div className="w-8 h-8 rounded-lg bg-[#1f6feb]/20 flex items-center justify-center text-lg">?��</div>
+                <div className="w-8 h-8 rounded-lg bg-[#1f6feb]/20 flex items-center justify-center text-lg">📊</div>
                 <div>
-                  <div className="text-sm font-medium">?�장 ?�측</div>
-                  <div className="text-[11px] text-text-secondary">AI 기반 ?�름 분석</div>
+                  <div className="text-sm font-medium">시장 예측</div>
+                  <div className="text-[11px] text-text-secondary">AI 기반 흐름 분석</div>
                 </div>
               </Link>
               <Link href="/calendar" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
-                <div className="w-8 h-8 rounded-lg bg-[#d29922]/20 flex items-center justify-center text-lg">?��</div>
+                <div className="w-8 h-8 rounded-lg bg-[#d29922]/20 flex items-center justify-center text-lg">📅</div>
                 <div>
-                  <div className="text-sm font-medium">경제 캘린??/div>
-                  <div className="text-[11px] text-text-secondary">FOMC, 금통?? ?�적</div>
+                  <div className="text-sm font-medium">경제 캘린더</div>
+                  <div className="text-[11px] text-text-secondary">FOMC, 금통위, 실적</div>
                 </div>
               </Link>
               <Link href="/tools" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
-                <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-lg">?��</div>
+                <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-lg">💱</div>
                 <div>
-                  <div className="text-sm font-medium">?�자 ?�구</div>
-                  <div className="text-[11px] text-text-secondary">?�율·?�금 계산�?/div>
+                  <div className="text-sm font-medium">투자 도구</div>
+                  <div className="text-[11px] text-text-secondary">환율·세금 계산기</div>
                 </div>
               </Link>
               <Link href="/search" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
-                <div className="w-8 h-8 rounded-lg bg-[#f85149]/20 flex items-center justify-center text-lg">?��</div>
+                <div className="w-8 h-8 rounded-lg bg-[#f85149]/20 flex items-center justify-center text-lg">🔍</div>
                 <div>
-                  <div className="text-sm font-medium">종목 검??/div>
-                  <div className="text-[11px] text-text-secondary">주식 ?�보 조회</div>
+                  <div className="text-sm font-medium">종목 검색</div>
+                  <div className="text-[11px] text-text-secondary">주식 정보 조회</div>
                 </div>
               </Link>
               <Link href="/dividend" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
-                <div className="w-8 h-8 rounded-lg bg-[#a371f7]/20 flex items-center justify-center text-lg">?��</div>
+                <div className="w-8 h-8 rounded-lg bg-[#a371f7]/20 flex items-center justify-center text-lg">💰</div>
                 <div>
-                  <div className="text-sm font-medium">배당 관�?/div>
-                  <div className="text-[11px] text-text-secondary">?�트?�리??배당 캘린??/div>
+                  <div className="text-sm font-medium">배당 관리</div>
+                  <div className="text-[11px] text-text-secondary">포트폴리오 배당 캘린더</div>
                 </div>
               </Link>
             </div>
           </div>
 
-          {/* 간단 공�? */}
+          {/* 간단 공지 */}
           <div className="bg-card rounded-lg border border-border p-4">
             <div className="text-xs text-text-secondary leading-relaxed">
-              ?�� <span className="text-text-primary font-medium">InvestBoard</span>?� ?�자 ?�보 ?�공 ?�랫?�입?�다.
-              모든 ?�자 ?�단??책임?� ?�용?�에�??�습?�다.
+              💡 <span className="text-text-primary font-medium">InvestBoard</span>은 투자 정보 제공 플랫폼입니다.
+              모든 투자 판단의 책임은 사용자에게 있습니다.
             </div>
           </div>
         </aside>

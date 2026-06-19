@@ -56,10 +56,10 @@ export default function CommunityListPage() {
     <div>
       <ForumTabs />
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold">커�??�티</h1>
+        <h1 className="text-xl font-bold">커뮤니티</h1>
         <button onClick={handleWrite}
           className="px-4 py-2 bg-accent text-black text-sm font-medium rounded-lg hover:opacity-90">
-          ?�️ 글?�기
+          ✏️ 글쓰기
         </button>
       </div>
 
@@ -70,18 +70,18 @@ export default function CommunityListPage() {
         <button onClick={() => setSort('popular')}
           className={`px-3 py-1.5 rounded text-xs font-medium transition ${
             sort === 'popular' ? 'bg-accent text-black' : 'bg-card border border-border text-text-secondary hover:text-text-primary'
-          }`}>?�� ?�기</button>
+          }`}>🔥 인기</button>
         <button onClick={() => setSort('latest')}
           className={`px-3 py-1.5 rounded text-xs font-medium transition ${
             sort === 'latest' ? 'bg-accent text-black' : 'bg-card border border-border text-text-secondary hover:text-text-primary'
-          }`}>??최신</button>
+          }`}>⚡ 최신</button>
       </div>
 
       {/* Post list */}
       {loading && posts.length === 0 ? (
         <PostListSkeleton />
       ) : posts.length === 0 ? (
-        <div className="text-center py-12 text-text-secondary text-sm">게시글???�습?�다</div>
+        <div className="text-center py-12 text-text-secondary text-sm">게시글이 없습니다</div>
       ) : (
         <div className="bg-card rounded-lg border border-border overflow-hidden divide-y divide-border/50">
           {posts.map((post) => <PostCard key={post.id} post={post} />)}
@@ -92,7 +92,7 @@ export default function CommunityListPage() {
         <div className="text-center mt-4">
           <button onClick={() => { const next = page + 1; setPage(next); loadPosts(next); }}
             className="px-6 py-2 bg-card border border-border rounded-lg text-sm text-text-secondary hover:text-text-primary transition">
-            ?�보�?
+            더보기
           </button>
         </div>
       )}

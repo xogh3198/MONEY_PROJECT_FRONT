@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://15.164.171.43:8083';
 
-export const dynamic = 'force-dynamic'; // 빌드 시 추출 방지
+export const dynamic = 'force-dynamic'; // 빌드 시 호출 방지
 
 export async function GET() {
   try {

@@ -29,9 +29,9 @@ export default function EditStockModal({ isOpen, stock, onClose, onSubmit }: Edi
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!quantity || parseInt(quantity) < 1) newErrors.quantity = '?�량?� 1 ?�상?�어???�니??;
+    if (!quantity || parseInt(quantity) < 1) newErrors.quantity = '수량은 1 이상이어야 합니다';
     if (dividendPerShare && parseFloat(dividendPerShare) < 0) {
-      newErrors.dividendPerShare = '주당배당금�? 0 ?�상?�어???�니??;
+      newErrors.dividendPerShare = '주당배당금은 0 이상이어야 합니다';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -60,9 +60,9 @@ export default function EditStockModal({ isOpen, stock, onClose, onSubmit }: Edi
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50">
       <div className="bg-card border border-border rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-text-primary">종목 ?�정</h2>
+          <h2 className="text-lg font-bold text-text-primary">종목 수정</h2>
           <button onClick={onClose} className="text-text-secondary hover:text-text-primary text-xl">
-            ??
+            ✕
           </button>
         </div>
 
@@ -78,7 +78,7 @@ export default function EditStockModal({ isOpen, stock, onClose, onSubmit }: Edi
           </div>
 
           <div>
-            <label className="block text-sm text-text-secondary mb-1">종목�?/label>
+            <label className="block text-sm text-text-secondary mb-1">종목명</label>
             <input
               type="text"
               value={stock.stockName}
@@ -88,7 +88,7 @@ export default function EditStockModal({ isOpen, stock, onClose, onSubmit }: Edi
           </div>
 
           <div>
-            <label className="block text-sm text-text-secondary mb-1">?�량 *</label>
+            <label className="block text-sm text-text-secondary mb-1">수량 *</label>
             <input
               type="number"
               value={quantity}
@@ -100,7 +100,7 @@ export default function EditStockModal({ isOpen, stock, onClose, onSubmit }: Edi
           </div>
 
           <div>
-            <label className="block text-sm text-text-secondary mb-1">배당?�일</label>
+            <label className="block text-sm text-text-secondary mb-1">배당락일</label>
             <input
               type="date"
               value={exDividendDate}
@@ -110,7 +110,7 @@ export default function EditStockModal({ isOpen, stock, onClose, onSubmit }: Edi
           </div>
 
           <div>
-            <label className="block text-sm text-text-secondary mb-1">주당배당�?(??</label>
+            <label className="block text-sm text-text-secondary mb-1">주당배당금 (원)</label>
             <input
               type="number"
               value={dividendPerShare}
@@ -135,7 +135,7 @@ export default function EditStockModal({ isOpen, stock, onClose, onSubmit }: Edi
               disabled={submitting}
               className="flex-1 px-4 py-2 bg-accent text-black text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
             >
-              {submitting ? '?�정 �?..' : '?�정'}
+              {submitting ? '수정 중...' : '수정'}
             </button>
           </div>
         </form>

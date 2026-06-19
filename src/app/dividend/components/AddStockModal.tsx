@@ -21,11 +21,11 @@ export default function AddStockModal({ isOpen, onClose, onSubmit }: AddStockMod
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!stockCode.trim()) newErrors.stockCode = '종목코드�??�력?�세??;
-    if (!stockName.trim()) newErrors.stockName = '종목명을 ?�력?�세??;
-    if (!quantity || parseInt(quantity) < 1) newErrors.quantity = '?�량?� 1 ?�상?�어???�니??;
+    if (!stockCode.trim()) newErrors.stockCode = '종목코드를 입력하세요';
+    if (!stockName.trim()) newErrors.stockName = '종목명을 입력하세요';
+    if (!quantity || parseInt(quantity) < 1) newErrors.quantity = '수량은 1 이상이어야 합니다';
     if (dividendPerShare && parseFloat(dividendPerShare) < 0) {
-      newErrors.dividendPerShare = '주당배당금�? 0 ?�상?�어???�니??;
+      newErrors.dividendPerShare = '주당배당금은 0 이상이어야 합니다';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -71,9 +71,9 @@ export default function AddStockModal({ isOpen, onClose, onSubmit }: AddStockMod
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50">
       <div className="bg-card border border-border rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-text-primary">종목 추�?</h2>
+          <h2 className="text-lg font-bold text-text-primary">종목 추가</h2>
           <button onClick={handleClose} className="text-text-secondary hover:text-text-primary text-xl">
-            ??
+            ✕
           </button>
         </div>
 
@@ -85,25 +85,25 @@ export default function AddStockModal({ isOpen, onClose, onSubmit }: AddStockMod
               value={stockCode}
               onChange={(e) => setStockCode(e.target.value)}
               className="w-full bg-card border border-border rounded-lg text-sm text-text-primary px-3 py-2 focus:outline-none focus:border-accent"
-              placeholder="?? 005930"
+              placeholder="예: 005930"
             />
             {errors.stockCode && <p className="text-negative text-xs mt-1">{errors.stockCode}</p>}
           </div>
 
           <div>
-            <label className="block text-sm text-text-secondary mb-1">종목�?*</label>
+            <label className="block text-sm text-text-secondary mb-1">종목명 *</label>
             <input
               type="text"
               value={stockName}
               onChange={(e) => setStockName(e.target.value)}
               className="w-full bg-card border border-border rounded-lg text-sm text-text-primary px-3 py-2 focus:outline-none focus:border-accent"
-              placeholder="?? ?�성?�자"
+              placeholder="예: 삼성전자"
             />
             {errors.stockName && <p className="text-negative text-xs mt-1">{errors.stockName}</p>}
           </div>
 
           <div>
-            <label className="block text-sm text-text-secondary mb-1">?�량 *</label>
+            <label className="block text-sm text-text-secondary mb-1">수량 *</label>
             <input
               type="number"
               value={quantity}
@@ -116,7 +116,7 @@ export default function AddStockModal({ isOpen, onClose, onSubmit }: AddStockMod
           </div>
 
           <div>
-            <label className="block text-sm text-text-secondary mb-1">배당?�일</label>
+            <label className="block text-sm text-text-secondary mb-1">배당락일</label>
             <input
               type="date"
               value={exDividendDate}
@@ -126,7 +126,7 @@ export default function AddStockModal({ isOpen, onClose, onSubmit }: AddStockMod
           </div>
 
           <div>
-            <label className="block text-sm text-text-secondary mb-1">주당배당�?(??</label>
+            <label className="block text-sm text-text-secondary mb-1">주당배당금 (원)</label>
             <input
               type="number"
               value={dividendPerShare}
@@ -152,7 +152,7 @@ export default function AddStockModal({ isOpen, onClose, onSubmit }: AddStockMod
               disabled={submitting}
               className="flex-1 px-4 py-2 bg-accent text-black text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
             >
-              {submitting ? '추�? �?..' : '추�?'}
+              {submitting ? '추가 중...' : '추가'}
             </button>
           </div>
         </form>

@@ -2,8 +2,8 @@
 import { usePathname, useRouter } from 'next/navigation';
 
 const TABS = [
-  { key: 'news', label: '?“° ?´ìŠ¤', path: '/forum' },
-  { key: 'community', label: '?’¬ ì»¤ë??ˆí‹°', path: '/forum/community' },
+  { key: 'news', label: 'ðŸ“° ë‰´ìŠ¤', path: '/forum' },
+  { key: 'community', label: 'ðŸ’¬ ì»¤ë®¤ë‹ˆí‹°', path: '/forum/community' },
 ] as const;
 
 export default function ForumTabs() {

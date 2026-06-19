@@ -11,11 +11,11 @@ export async function POST(request: NextRequest) {
   const { code } = await request.json();
 
   if (!code) {
-    return NextResponse.json({ error: '?�증 코드가 ?�습?�다' }, { status: 400 });
+    return NextResponse.json({ error: '인증 코드가 없습니다' }, { status: 400 });
   }
 
   try {
-    // 1. 카카?�에??access_token 발급
+    // 1. 카카오에서 access_token 발급
     const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -31,10 +31,10 @@ export async function POST(request: NextRequest) {
 
     if (tokenData.error) {
       console.error('Kakao token error:', tokenData);
-      return NextResponse.json({ error: '카카???�증???�패?�습?�다' }, { status: 401 });
+      return NextResponse.json({ error: '카카오 인증에 실패했습니다' }, { status: 401 });
     }
 
-    // 2. 카카???�용???�로??조회
+    // 2. 카카오 사용자 프로필 조회
     const profileRes = await fetch('https://kapi.kakao.com/v2/user/me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
@@ -42,11 +42,11 @@ export async function POST(request: NextRequest) {
 
     const kakaoUser = {
       id: String(profileData.id),
-      nickname: profileData.kakao_account?.profile?.nickname || '카카?�사?�자',
+      nickname: profileData.kakao_account?.profile?.nickname || '카카오사용자',
       email: profileData.kakao_account?.email || '',
     };
 
-    // 3. 백엔?�에 카카???�용???�보 ?�달
+    // 3. 백엔드에 카카오 사용자 정보 전달
     const res = await fetch(`${ENGINE_API}/api/auth/kakao`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -56,6 +56,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: res.status });
   } catch (error: any) {
     console.error('Kakao auth error:', error?.message || error);
-    return NextResponse.json({ error: '카카??로그??처리 �??�류가 발생?�습?�다' }, { status: 500 });
+    return NextResponse.json({ error: '카카오 로그인 처리 중 오류가 발생했습니다' }, { status: 500 });
   }
 }

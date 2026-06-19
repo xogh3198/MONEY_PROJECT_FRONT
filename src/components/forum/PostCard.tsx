@@ -2,12 +2,12 @@
 import Link from 'next/link';
 
 const CATEGORY_MAP: Record<string, string> = {
-  DOMESTIC: '�?��증시',
-  OVERSEAS: '?�외증시',
-  FOREX: '?�율',
-  CRYPTO: '?�호?�폐',
-  REAL_ESTATE: '부?�산',
-  FREE: '?�유',
+  DOMESTIC: '국내증시',
+  OVERSEAS: '해외증시',
+  FOREX: '환율',
+  CRYPTO: '암호화폐',
+  REAL_ESTATE: '부동산',
+  FREE: '자유',
 };
 
 export interface ForumPost {
@@ -29,9 +29,9 @@ function timeAgo(dateStr: string): string {
   if (!dateStr) return '';
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
   if (diff < 1) return '방금';
-  if (diff < 60) return `${diff}�???;
-  if (diff < 1440) return `${Math.floor(diff / 60)}?�간 ??;
-  return `${Math.floor(diff / 1440)}????;
+  if (diff < 60) return `${diff}분 전`;
+  if (diff < 1440) return `${Math.floor(diff / 60)}시간 전`;
+  return `${Math.floor(diff / 1440)}일 전`;
 }
 
 export default function PostCard({ post }: { post: ForumPost }) {
@@ -50,9 +50,9 @@ export default function PostCard({ post }: { post: ForumPost }) {
           {post.title}
         </h3>
         <div className="flex items-center gap-4 text-[11px] text-text-secondary">
-          <span>?�� {post.viewCount}</span>
-          <span>?�� {post.likeCount}</span>
-          <span>?�� {post.commentCount}</span>
+          <span>👁 {post.viewCount}</span>
+          <span>👍 {post.likeCount}</span>
+          <span>💬 {post.commentCount}</span>
         </div>
       </div>
     </Link>

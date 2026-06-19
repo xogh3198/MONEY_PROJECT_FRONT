@@ -3,13 +3,13 @@
 export type ForumCategory = 'ALL' | 'DOMESTIC' | 'OVERSEAS' | 'FOREX' | 'CRYPTO' | 'REAL_ESTATE' | 'FREE';
 
 const CATEGORIES: { value: ForumCategory; label: string }[] = [
-  { value: 'ALL', label: '?„μ²΄' },
-  { value: 'DOMESTIC', label: '?‡°?‡· κµ?‚΄μ¦μ‹' },
-  { value: 'OVERSEAS', label: '?‡Ί?‡Έ ?΄μ™Έμ¦μ‹' },
-  { value: 'FOREX', label: '?’± ?μ¨' },
-  { value: 'CRYPTO', label: '???”νΈ?”ν' },
-  { value: 'REAL_ESTATE', label: '?  λ¶€?™μ‚°' },
-  { value: 'FREE', label: '?’¬ ?μ ' },
+  { value: 'ALL', label: 'μ „μ²΄' },
+  { value: 'DOMESTIC', label: 'π‡°π‡· κµ­λ‚΄μ¦μ‹' },
+  { value: 'OVERSEAS', label: 'π‡Ίπ‡Έ ν•΄μ™Έμ¦μ‹' },
+  { value: 'FOREX', label: 'π’± ν™μ¨' },
+  { value: 'CRYPTO', label: 'β‚Ώ μ•”νΈν™”ν' },
+  { value: 'REAL_ESTATE', label: 'π  λ¶€λ™μ‚°' },
+  { value: 'FREE', label: 'π’¬ μμ ' },
 ];
 
 interface Props {
