@@ -77,7 +77,18 @@ export default function LoginPage() {
   };
 
   const handleKakaoLogin = () => {
-    alert('카카오 로그인은 준비 중입니다.');
+    const KAKAO_CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || '';
+    const REDIRECT_URI = `${window.location.origin}/auth/kakao/callback`;
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code`;
+    window.location.href = kakaoAuthUrl;
+  };
+
+  const handleNaverLogin = () => {
+    const NAVER_CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID || '';
+    const REDIRECT_URI = `${window.location.origin}/auth/naver/callback`;
+    const state = Math.random().toString(36).substring(2, 15);
+    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${state}`;
+    window.location.href = naverAuthUrl;
   };
 
   return (
@@ -192,7 +203,7 @@ export default function LoginPage() {
             카카오로 시작하기
           </button>
 
-          <button onClick={() => alert('네이버 로그인은 네이버 개발자센터 앱 등록 후 사용 가능합니다.')}
+          <button onClick={handleNaverLogin}
             className="w-full py-3 bg-[#03C75A] text-white font-medium rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2 text-sm">
             <span className="font-bold text-base">N</span>
             네이버로 시작하기
