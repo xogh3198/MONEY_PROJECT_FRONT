@@ -21,8 +21,17 @@ function NaverCallbackContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, state }),
     })
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          const text = await res.text();
+          try { const json = JSON.parse(text); setError(json.error || `서버 오류 (${res.status})`); }
+          catch { setError(`서버 오류 (${res.status}): ${text.slice(0, 100)}`); }
+          return;
+        }
+        return res.json();
+      })
       .then(data => {
+        if (!data) return;
         if (data.error) {
           setError(data.error);
         } else {
@@ -32,8 +41,8 @@ function NaverCallbackContent() {
           window.location.href = '/';
         }
       })
-      .catch(() => {
-        setError('네이버 로그인 처리 중 오류가 발생했습니다.');
+      .catch((e) => {
+        setError('네이버 로그인 처리 중 오류가 발생했습니다: ' + (e?.message || ''));
       });
   }, [searchParams]);
 

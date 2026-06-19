@@ -45,6 +45,13 @@ export async function POST(request: NextRequest) {
         nickname: naverUser.nickname || naverUser.name || '네이버사용자',
       }),
     });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Backend naver auth error:', res.status, errorText);
+      return NextResponse.json({ error: `백엔드 인증 실패 (${res.status})` }, { status: res.status });
+    }
+
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (error: any) {
