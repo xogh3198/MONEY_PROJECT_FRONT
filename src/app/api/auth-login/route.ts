@@ -14,6 +14,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: res.status });
   } catch (error: any) {
     console.error('Auth login error:', error?.message || error);
-    return NextResponse.json({ error: '?�버???�결?????�습?�다. ?�시 ???�시 ?�도?�주?�요.' }, { status: 503 });
+    return NextResponse.json({ error: '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.' }, { status: 503 });
   }
 }
