@@ -167,7 +167,10 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
 
   return (
     <div className="px-5 py-4 hover:bg-[#1c2129] transition cursor-pointer" onClick={() => {
-      if (article.sourceUrl && article.sourceUrl !== '#') window.open(article.sourceUrl, '_blank');
+      const url = article.sourceUrl;
+      if (url && url !== '#' && !url.includes('example.com')) {
+        window.open(url, '_blank');
+      }
     }}>
       <div className="flex items-center gap-2 mb-2 text-[11px]">
         {showRank && (
@@ -186,7 +189,12 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
           {categoryMap[article.category] || article.category}
         </span>
       </div>
-      <h3 className="text-[14px] font-semibold text-text-primary mb-1 leading-snug">{article.title}</h3>
+      <h3 className="text-[14px] font-semibold text-text-primary mb-1 leading-snug">
+        {article.title}
+        {article.sourceUrl && !article.sourceUrl.includes('example.com') && article.sourceUrl !== '#' && (
+          <span className="text-accent-blue ml-1 text-[10px]">↗</span>
+        )}
+      </h3>
       {article.summary && (
         <p className="text-[12px] text-text-secondary leading-relaxed mb-2 line-clamp-2">{article.summary}</p>
       )}
