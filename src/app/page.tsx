@@ -5,7 +5,11 @@ import { fetchIndicators, fetchHotNews } from '@/lib/api';
 import { IndicatorSkeleton, NewsListSkeleton } from '@/components/Skeleton';
 
 interface Indicator { type: string; name: string; value: number; changePercent: number; }
-interface NewsItem { id: string; title: string; summary?: string; sourceName: string; publishedAt: string; commentCount: number; category: string; sentiment: string; viewCount?: number; sourceUrl?: string; }
+interface NewsItem {
+  id: string; title: string; summary?: string; sourceName: string; publishedAt: string;
+  commentCount: number; positiveVotes: number; negativeVotes: number;
+  category: string; sentiment: string; viewCount: number; sourceUrl?: string;
+}
 
 export default function HomePage() {
   const [indicators, setIndicators] = useState<Indicator[]>([]);
@@ -51,12 +55,15 @@ export default function HomePage() {
         {/* 뉴스 */}
         <section className="bg-card rounded-lg border border-border overflow-hidden">
           <div className="px-5 py-3 border-b border-border flex justify-between items-center">
-            <h2 className="text-sm font-bold">🔥 실시간 경제뉴스</h2>
-            <Link href="/forum" className="text-xs text-accent-blue hover:underline">전체보기 →</Link>
+            <div>
+              <h2 className="text-sm font-bold">🔥 인기 경제뉴스</h2>
+              <p className="mt-0.5 text-[10px] text-text-secondary">조회·댓글·좋아요·싫어요와 최신성 반영</p>
+            </div>
+            <Link href="/forum" className="text-xs text-accent-blue hover:underline">인기 탭 →</Link>
           </div>
           <div className="divide-y divide-border/50">
             {news.slice(0, 10).map((item, idx) => (
-              <a key={item.id} href={item.sourceUrl || '/forum'} target={item.sourceUrl ? '_blank' : '_self'} rel="noopener noreferrer" className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#1c2129] transition">
+              <Link key={item.id} href={`/forum/news/${item.id}`} className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#1c2129] transition">
                 <span className={`flex-shrink-0 mt-1 text-xs font-bold w-5 text-center ${idx < 3 ? 'text-accent' : 'text-text-secondary'}`}>
                   {idx + 1}
                 </span>
@@ -71,15 +78,17 @@ export default function HomePage() {
                   {item.summary && (
                     <p className="text-[11px] text-text-secondary truncate">{item.summary}</p>
                   )}
-                  <div className="flex gap-2 mt-1 text-[11px] text-text-secondary">
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-secondary">
                     <span>{item.sourceName}</span>
                     <span>·</span>
                     <span>{item.category}</span>
-                    {item.viewCount ? <span className="ml-auto">👁 {item.viewCount.toLocaleString()}</span> : null}
-                    <span>💬 {item.commentCount}</span>
+                    <span className="ml-auto">👁 {(item.viewCount || 0).toLocaleString()}</span>
+                    <span>💬 {(item.commentCount || 0).toLocaleString()}</span>
+                    <span className="text-[#f85149]">👍 {(item.positiveVotes || 0).toLocaleString()}</span>
+                    <span className="text-[#58a6ff]">👎 {(item.negativeVotes || 0).toLocaleString()}</span>
                   </div>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </section>

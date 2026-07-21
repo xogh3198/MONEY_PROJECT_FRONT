@@ -22,11 +22,6 @@ export async function fetchIndicators() {
   return res.data;
 }
 
-// 투표
-export async function voteArticle(articleId: string, type: 'positive' | 'negative') {
-  // 직접 EC2 호출 (서버 사이드 아님 — 추후 API Route 추가)
-}
-
 // Auth
 export async function kakaoLogin(code: string) {
   const res = await api.post('/api/auth/kakao', { code });
