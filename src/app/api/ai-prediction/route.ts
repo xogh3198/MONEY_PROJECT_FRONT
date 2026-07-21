@@ -30,7 +30,7 @@ export async function GET() {
     ).join(', ');
 
     // 3. Gemini API 호출 (GEMINI_MODEL, 기본 gemini-3.1-flash-lite)
-    const prompt = `당신은 한국 경제/주식 시장 분석 전문가입니다.
+    const prompt = `당신은 한국 경제/주식 시장을 설명하는 데이터 저널리스트입니다.
 
 현재 시장 지표:
 ${indicatorSummary}
@@ -40,13 +40,21 @@ ${newsHeadlines}
 
 위 데이터를 기반으로 다음을 분석해주세요:
 1. 오늘 시장 요약 (2~3문장)
-2. 코스피 단기 전망 (상승/하락/보합 + 이유 1문장)
-3. 주의해야 할 리스크 1가지
-4. 투자자에게 한마디
+2. 코스피 단기 시나리오 (상승/하락/보합 가능성과 근거 1문장, 단정 금지)
+3. 확인해야 할 리스크 1가지
+4. 다음으로 관찰할 시장 데이터 1가지
+
+필수 원칙:
+- 매수·매도·보유, 현금 비중, 종목 선택 등 투자 행동을 지시하지 않습니다.
+- 수익을 보장하거나 공포를 조장하지 않습니다.
+- 사실과 해석을 구분하고 불확실성을 명시합니다.
+- 마지막 문장은 반드시 "이 내용은 정보 제공 목적이며 투자 조언이 아닙니다."로 끝냅니다.
 
 간결하게 총 5~8문장으로 답변해주세요. 한국어로 작성하세요.`;
 
-    const text = await generateGeminiText(prompt);
+    const generated = await generateGeminiText(prompt);
+    const disclaimer = '이 내용은 정보 제공 목적이며 투자 조언이 아닙니다.';
+    const text = generated.includes(disclaimer) ? generated : `${generated}\n\n${disclaimer}`;
 
     return NextResponse.json({
       analysis: text,
