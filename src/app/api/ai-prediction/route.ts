@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
+import { generateGeminiText } from '@/lib/server/gemini';
 
-const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
-const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://15.164.171.43:8083';
+const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8083';
 
 export const dynamic = 'force-dynamic'; // 빌드 시 호출 방지
 
 export async function GET() {
   try {
     // 키 없으면 기본 분석
-    if (!GEMINI_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({
         analysis: 'Gemini API 키가 설정되지 않았습니다. Vercel 환경변수에 GEMINI_API_KEY를 설정해주세요.',
         updatedAt: new Date().toISOString(),
@@ -29,7 +29,7 @@ export async function GET() {
       `${i.name}: ${i.value} (${i.changePercent > 0 ? '+' : ''}${i.changePercent}%)`
     ).join(', ');
 
-    // 3. Gemini API 호출
+    // 3. Gemini API 호출 (GEMINI_MODEL, 기본 gemini-3.1-flash-lite)
     const prompt = `당신은 한국 경제/주식 시장 분석 전문가입니다.
 
 현재 시장 지표:
@@ -46,29 +46,7 @@ ${newsHeadlines}
 
 간결하게 총 5~8문장으로 답변해주세요. 한국어로 작성하세요.`;
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      }
-    );
-
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error('Gemini API error:', geminiRes.status, errText);
-      return NextResponse.json({
-        analysis: `AI 분석 오류 (${geminiRes.status}): 잠시 후 다시 시도해주세요.`,
-        updatedAt: new Date().toISOString(),
-        indicators: indicatorSummary,
-      });
-    }
-
-    const geminiData = await geminiRes.json();
-    const text = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '분석 결과를 가져올 수 없습니다.';
+    const text = await generateGeminiText(prompt);
 
     return NextResponse.json({
       analysis: text,
@@ -76,6 +54,7 @@ ${newsHeadlines}
       indicators: indicatorSummary,
     });
   } catch (error) {
+    console.error('AI prediction error:', error);
     return NextResponse.json({
       analysis: 'AI 분석을 일시적으로 이용할 수 없습니다.',
       updatedAt: new Date().toISOString(),
