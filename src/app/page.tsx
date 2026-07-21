@@ -57,7 +57,7 @@ export default function HomePage() {
           <div className="px-5 py-3 border-b border-border flex justify-between items-center">
             <div>
               <h2 className="text-sm font-bold">🔥 인기 경제뉴스</h2>
-              <p className="mt-0.5 text-[10px] text-text-secondary">조회·댓글·좋아요·싫어요와 최신성 반영</p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">InvestBoard 반응·외부 트렌드·최신성 반영</p>
             </div>
             <Link href="/forum" className="text-xs text-accent-blue hover:underline">인기 탭 →</Link>
           </div>

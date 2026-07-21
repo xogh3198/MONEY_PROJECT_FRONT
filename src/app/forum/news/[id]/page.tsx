@@ -88,11 +88,14 @@ export default function NewsArticlePage({ params }: { params: { id: string } }) 
           <p className="mb-5 text-sm text-text-secondary">기사 요약이 제공되지 않았습니다. 원문에서 내용을 확인해주세요.</p>
         )}
 
-        <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border/70 bg-bg/40 px-4 py-3 text-xs text-text-secondary">
-          <span>👁 조회 {article.viewCount.toLocaleString()}</span>
-          <span>💬 댓글 {article.commentCount.toLocaleString()}</span>
-          <span className="text-[#f85149]">👍 좋아요 {article.positiveVotes.toLocaleString()}</span>
-          <span className="text-[#58a6ff]">👎 싫어요 {article.negativeVotes.toLocaleString()}</span>
+        <div className="mb-5 rounded-lg border border-border/70 bg-bg/40 px-4 py-3 text-xs text-text-secondary">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-text-secondary">InvestBoard 내부 반응</p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span>👁 조회 {article.viewCount.toLocaleString()}</span>
+            <span>💬 댓글 {article.commentCount.toLocaleString()}</span>
+            <span className="text-[#f85149]">👍 좋아요 {article.positiveVotes.toLocaleString()}</span>
+            <span className="text-[#58a6ff]">👎 싫어요 {article.negativeVotes.toLocaleString()}</span>
+          </div>
         </div>
 
         <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">

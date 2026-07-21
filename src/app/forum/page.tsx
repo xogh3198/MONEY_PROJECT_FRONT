@@ -87,7 +87,7 @@ export default function ForumPage() {
       <div className="mb-5">
         <h1 className="text-xl font-bold">경제뉴스</h1>
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-xs text-text-secondary">실시간 뉴스와 조회·댓글·평가 기반 인기 기사</p>
+          <p className="text-xs text-text-secondary">실시간 뉴스와 InvestBoard 반응·외부 트렌드 기반 인기 기사</p>
           {tab === 'realtime' && (
             <span className="text-[10px] text-accent animate-pulse">● LIVE</span>
           )}
@@ -194,7 +194,7 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
       {article.summary && (
         <p className="text-[12px] text-text-secondary leading-relaxed mb-2 line-clamp-2">{article.summary}</p>
       )}
-      <div className="flex items-center gap-4 text-[11px] text-text-secondary">
+      <div className="flex items-center gap-4 text-[11px] text-text-secondary" aria-label="InvestBoard 내부 반응">
         <span>👁 {(article.viewCount || 0).toLocaleString()}</span>
         <span>💬 {(article.commentCount || 0).toLocaleString()}</span>
         <span className="text-[#f85149]">👍 {(article.positiveVotes || 0).toLocaleString()}</span>

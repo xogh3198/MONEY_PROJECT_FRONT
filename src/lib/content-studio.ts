@@ -10,6 +10,7 @@ export interface NewsArticleInput {
   commentCount?: number;
   positiveVotes?: number;
   negativeVotes?: number;
+  externalTrendScore?: number;
   publishedAt?: string;
 }
 
@@ -109,7 +110,9 @@ export function buildContentOpportunities(
     if (!article?.id || !article?.title) continue;
     const key = article.sourceUrl || article.title.trim().toLowerCase();
     const previous = deduped.get(key);
-    if (!previous || (article.viewCount || 0) > (previous.viewCount || 0)) {
+    const articleSignal = (article.viewCount || 0) + (article.externalTrendScore || 0);
+    const previousSignal = (previous?.viewCount || 0) + (previous?.externalTrendScore || 0);
+    if (!previous || articleSignal > previousSignal) {
       deduped.set(key, article);
     }
   }
@@ -137,6 +140,7 @@ function scoreOpportunity(
   const ageHours = published ? Math.max(0, (now.getTime() - published.getTime()) / 3_600_000) : 72;
   const freshness = Math.max(0, 24 * (1 - ageHours / 48));
   const popularity = Math.min(22, Math.log1p(Math.max(0, article.viewCount || 0)) * 3.2);
+  const externalTrend = Math.min(12, Math.max(0, article.externalTrendScore || 0) / 200 * 12);
   const engagement = Math.min(
     8,
     (article.commentCount || 0) * 1.5 +
@@ -160,7 +164,7 @@ function scoreOpportunity(
   const riskPenalty = riskFlags.length * 2;
   const score = Math.max(
     1,
-    Math.min(100, Math.round(relevance + freshness + popularity + engagement + marketMovement + explanationValue - riskPenalty)),
+    Math.min(100, Math.round(relevance + freshness + popularity + externalTrend + engagement + marketMovement + explanationValue - riskPenalty)),
   );
 
   const category = article.category || 'DOMESTIC';
@@ -168,8 +172,12 @@ function scoreOpportunity(
   const signals = [
     `금융 핵심어: ${matchedTerms.slice(0, 4).map(([term]) => term).join(', ')}`,
     ageHours <= 48 ? `최신성: 약 ${Math.round(ageHours)}시간 전` : '최신성 낮음: 발행 시각 재확인',
-    `내부 관심 신호: ${Math.max(0, article.viewCount || 0).toLocaleString()}`,
+    `InvestBoard 조회: ${Math.max(0, article.viewCount || 0).toLocaleString()}`,
   ];
+
+  if ((article.externalTrendScore || 0) > 0) {
+    signals.push(`외부 트렌드 신호: ${Math.max(0, article.externalTrendScore || 0).toLocaleString()}`);
+  }
 
   if (relatedIndicators.length) {
     signals.push(
