@@ -8,7 +8,15 @@ npm run dev
 # → http://localhost:3000
 ```
 
-API는 EC2 백엔드(15.164.171.43)를 자동으로 사용합니다 (API Route 프록시).
+API는 환경변수가 없을 때 EC2 백엔드(13.124.149.70)를 사용합니다 (API Route 프록시).
+
+콘텐츠 스튜디오(`/content-studio`)는 아래 서버 전용 환경변수가 필요합니다.
+
+```bash
+CONTENT_STUDIO_ACCESS_KEY=(충분히 긴 임의 문자열)
+GEMINI_API_KEY=(Google AI Studio 키)
+GEMINI_MODEL=gemini-3.1-flash-lite
+```
 
 ## 백엔드 로컬 실행 (선택)
 ```bash
