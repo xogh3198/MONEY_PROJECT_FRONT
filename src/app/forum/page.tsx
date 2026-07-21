@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import ForumTabs from '@/components/forum/ForumTabs';
 
 type Category = 'ALL' | 'DOMESTIC' | 'OVERSEAS' | 'FOREX' | 'RATE' | 'CRYPTO';
@@ -86,7 +87,7 @@ export default function ForumPage() {
       <div className="mb-5">
         <h1 className="text-xl font-bold">경제뉴스</h1>
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-xs text-text-secondary">실시간 경제 뉴스와 시장 분석</p>
+          <p className="text-xs text-text-secondary">실시간 뉴스와 조회·댓글·평가 기반 인기 기사</p>
           {tab === 'realtime' && (
             <span className="text-[10px] text-accent animate-pulse">● LIVE</span>
           )}
@@ -168,12 +169,7 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
   };
 
   return (
-    <div className="px-5 py-4 hover:bg-[#1c2129] transition cursor-pointer" onClick={() => {
-      const url = article.sourceUrl;
-      if (url && url !== '#' && !url.includes('example.com')) {
-        window.open(url, '_blank');
-      }
-    }}>
+    <Link href={`/forum/news/${article.id}`} className="block px-5 py-4 hover:bg-[#1c2129] transition">
       <div className="flex items-center gap-2 mb-2 text-[11px]">
         {showRank && (
           <span className={`font-bold w-5 text-center ${rank <= 3 ? 'text-accent' : 'text-text-secondary'}`}>{rank}</span>
@@ -182,7 +178,7 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
         <span className="text-border">·</span>
         <span className="text-text-secondary">{timeAgo(article.publishedAt)}</span>
         {showRank && (
-          <span className="text-[10px] text-text-secondary ml-1">👁 {article.viewCount.toLocaleString()}</span>
+          <span className="text-[10px] text-text-secondary ml-1">👁 {(article.viewCount || 0).toLocaleString()}</span>
         )}
         <span className={`ml-auto px-2 py-0.5 rounded text-[10px] font-medium ${sentimentLabel.color}`}>
           {sentimentLabel.text}
@@ -193,20 +189,18 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
       </div>
       <h3 className="text-[14px] font-semibold text-text-primary mb-1 leading-snug">
         {article.title}
-        {article.sourceUrl && !article.sourceUrl.includes('example.com') && article.sourceUrl !== '#' && (
-          <span className="text-accent-blue ml-1 text-[10px]">↗</span>
-        )}
+        <span className="text-accent-blue ml-1 text-[10px]">자세히 →</span>
       </h3>
       {article.summary && (
         <p className="text-[12px] text-text-secondary leading-relaxed mb-2 line-clamp-2">{article.summary}</p>
       )}
       <div className="flex items-center gap-4 text-[11px] text-text-secondary">
-        <span>👁 {article.viewCount.toLocaleString()}</span>
-        <span>💬 {article.commentCount}</span>
-        <span className="text-[#f85149]">👍 {article.positiveVotes}</span>
-        <span className="text-[#58a6ff]">👎 {article.negativeVotes}</span>
+        <span>👁 {(article.viewCount || 0).toLocaleString()}</span>
+        <span>💬 {(article.commentCount || 0).toLocaleString()}</span>
+        <span className="text-[#f85149]">👍 {(article.positiveVotes || 0).toLocaleString()}</span>
+        <span className="text-[#58a6ff]">👎 {(article.negativeVotes || 0).toLocaleString()}</span>
       </div>
-    </div>
+    </Link>
   );
 }
 
