@@ -20,13 +20,13 @@ export const metadata: Metadata = {
     siteName: 'InvestBoard',
     type: 'website',
     locale: 'ko_KR',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'InvestBoard 금융 데이터 브리핑' }],
+    images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'InvestBoard 금융 데이터 브리핑' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'InvestBoard | 오늘 내 돈에 영향을 주는 금융 데이터',
     description: '인기 금융 이슈를 시장지표와 계산 도구로 이해하는 1분 브리핑.',
-    images: ['/opengraph-image'],
+    images: ['/opengraph-image.png'],
   },
   robots: {
     index: true,
