@@ -5,6 +5,7 @@ import GrowthTracker from '@/components/analytics/GrowthTracker';
 import ShareButton from '@/components/ShareButton';
 import TrackedLink from '@/components/analytics/TrackedLink';
 import { CATEGORY_LABELS, NewsArticle } from '@/lib/news';
+import { rankNewsForBriefing } from '@/lib/news-ranking';
 
 const SITE_URL = 'https://investboard.cloud';
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8083';
@@ -66,12 +67,16 @@ const GUIDANCE: Record<string, { why: string; affected: string; checks: string[]
 
 async function loadBriefing(): Promise<{ articles: NewsArticle[]; indicators: Indicator[] }> {
   try {
-    const [newsResponse, indicatorResponse] = await Promise.all([
+    const [hotResponse, recentResponse, indicatorResponse] = await Promise.all([
       fetch(`${NEWS_API}/api/news/hot`, { cache: 'no-store' }),
+      fetch(`${NEWS_API}/api/news?page=0&size=50&sort=publishedAt,desc`, { cache: 'no-store' }),
       fetch(`${NEWS_API}/api/market/indicators`, { cache: 'no-store' }),
     ]);
+    const hot: NewsArticle[] = hotResponse.ok ? await hotResponse.json() : [];
+    const recentPayload = recentResponse.ok ? await recentResponse.json() : {};
+    const recent: NewsArticle[] = Array.isArray(recentPayload?.content) ? recentPayload.content : [];
     return {
-      articles: newsResponse.ok ? await newsResponse.json() : [],
+      articles: rankNewsForBriefing([...hot, ...recent], 10),
       indicators: indicatorResponse.ok ? await indicatorResponse.json() : [],
     };
   } catch {
