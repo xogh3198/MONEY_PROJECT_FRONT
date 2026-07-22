@@ -8,7 +8,18 @@ const FINANCE_TERMS: Array<[string, number]> = [
   ['고용', 4], ['관세', 5], ['무역', 4], ['수출', 4], ['수입', 4],
   ['부동산', 5], ['아파트', 4], ['대출', 6], ['은행', 4], ['채권', 6],
   ['세금', 5], ['연금', 5], ['etf', 6], ['유가', 5], ['원유', 5], ['금값', 5],
+  ['증권', 6], ['국채', 7], ['펀드', 6], ['etn', 5], ['rp', 5], ['m&a', 5],
+  ['외국인', 5], ['기관', 4], ['수익률', 6], ['영업이익', 5], ['매출', 4],
+  ['매수', 5], ['매도', 5], ['레버리지', 6], ['인버스', 6], ['퇴직연금', 6],
   ['투자', 4], ['금융', 4], ['경제', 3], ['기업', 2], ['시장', 2],
+];
+
+const DIRECT_FINANCE_TERMS = [
+  '기준금리', '코스피', '코스닥', '나스닥', 's&p', '환율', '원달러', '비트코인',
+  '이더리움', '배당', '증시', '주가', '주식', '금리', '연준', 'fomc', '반도체',
+  '실적', '상장', '물가', '인플레이션', '부동산', '대출', '은행', '채권', '연금',
+  'etf', '유가', '원유', '금값', '증권', '국채', '펀드', 'etn', 'rp', 'm&a',
+  '외국인', '수익률', '영업이익', '매수', '매도', '레버리지', '인버스', '퇴직연금',
 ];
 
 const NON_FINANCE_TERMS = [
@@ -60,8 +71,9 @@ function scoreArticle(article: NewsArticle, now: Date): number | null {
     (score, [term, weight]) => score + (text.includes(term) ? weight : 0),
     0,
   );
+  const hasDirectFinanceSignal = DIRECT_FINANCE_TERMS.some(term => text.includes(term));
   const hasNonFinanceSignal = NON_FINANCE_TERMS.some(term => text.includes(term));
-  if (relevance < 5 || (hasNonFinanceSignal && relevance < 14)) return null;
+  if (relevance < 5 || (!hasDirectFinanceSignal && relevance < 10) || (hasNonFinanceSignal && relevance < 14)) return null;
 
   const publishedAt = parsePublishedAt(article.publishedAt);
   const ageHours = publishedAt
