@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '경제뉴스 - InvestBoard | 실시간 경제 뉴스 & 투자 포럼',
-  description: '국내증시, 해외증시, 환율, 금리, 암호화폐 실시간 뉴스. 투자자들의 시장 전망과 토론.',
+  title: '실시간 경제뉴스와 관심 신호',
+  description: '국내증시, 해외증시, 환율, 금리, 암호화폐 뉴스를 내부 반응과 공개 관심 신호를 분리해 확인합니다.',
+  alternates: { canonical: 'https://investboard.cloud/forum' },
 };
 
 export default function ForumLayout({ children }: { children: React.ReactNode }) {

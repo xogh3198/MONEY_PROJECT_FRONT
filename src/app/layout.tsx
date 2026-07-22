@@ -1,27 +1,38 @@
 ﻿import './globals.css';
 import type { Metadata } from 'next';
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
-  title: 'InvestBoard | 실시간 경제 뉴스 & AI 시장 예측',
-  description: '코스피, 코스닥, 환율, 비트코인 실시간 지표와 AI 시장 예측. 경제 뉴스 포럼에서 투자자들과 시장을 분석하세요. 배당금 캘린더 & ISA 절세 최적화.',
-  keywords: ['경제뉴스', '코스피', '주식', '환율', '비트코인', '배당금', 'ISA', '투자', '시장예측', 'AI분석'],
+  metadataBase: new URL('https://investboard.cloud'),
+  title: { default: 'InvestBoard | 오늘 내 돈에 영향을 주는 금융 데이터', template: '%s | InvestBoard' },
+  description: '인기 금융 이슈를 시장지표, 공개 관심 신호, 계산 도구와 연결해 1분 안에 설명합니다.',
+  keywords: ['경제뉴스', '코스피', '주식', '환율', '금리', '배당금', '금융 데이터', '시장 브리핑'],
+  authors: [{ name: 'InvestBoard 편집팀', url: 'https://investboard.cloud/guides' }],
+  creator: 'InvestBoard',
+  publisher: 'InvestBoard',
+  alternates: { types: { 'application/rss+xml': '/feed.xml' } },
   openGraph: {
-    title: 'InvestBoard | 실시간 경제 뉴스 & AI 시장 예측',
-    description: '코스피·환율·비트코인 실시간 지표. AI 시장 분석. 경제 포럼에서 투자자들과 소통하세요.',
+    title: 'InvestBoard | 오늘 내 돈에 영향을 주는 금융 데이터',
+    description: '인기 금융 이슈를 시장지표와 계산 도구로 이해하는 1분 브리핑.',
     url: 'https://investboard.cloud',
     siteName: 'InvestBoard',
     type: 'website',
     locale: 'ko_KR',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'InvestBoard 금융 데이터 브리핑' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'InvestBoard | 실시간 경제 뉴스 & AI 시장 예측',
-    description: '코스피·환율·비트코인 실시간 지표. AI 시장 분석. 투자자를 위한 종합 플랫폼.',
+    title: 'InvestBoard | 오늘 내 돈에 영향을 주는 금융 데이터',
+    description: '인기 금융 이슈를 시장지표와 계산 도구로 이해하는 1분 브리핑.',
+    images: ['/opengraph-image'],
   },
-  robots: { index: true, follow: true },
-  alternates: { canonical: 'https://investboard.cloud' },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="max-w-7xl mx-auto px-4 py-6 pb-20 md:pb-6">
           {children}
         </main>
+        <Footer />
         <Analytics />
       </body>
     </html>

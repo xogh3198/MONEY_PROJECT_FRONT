@@ -1,10 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { fetchIndicators } from '@/lib/api';
+import Link from 'next/link';
+import { track } from '@vercel/analytics/react';
+import GrowthTracker from '@/components/analytics/GrowthTracker';
 
 export default function ToolsPage() {
   return (
     <div>
+      <GrowthTracker contentType="tools" contentId="tools" />
       <div className="mb-6">
         <h1 className="text-xl font-bold">🛠 투자 도구</h1>
         <p className="text-xs text-text-secondary mt-1">투자에 유용한 계산기와 도구</p>
@@ -14,6 +18,14 @@ export default function ToolsPage() {
         <CurrencyCalculator />
         <DividendTaxCalculator />
       </div>
+      <section className="mt-6 rounded-lg border border-border bg-card p-5">
+        <h2 className="font-bold">계산 결과를 이해하는 가이드</h2>
+        <div className="mt-3 grid gap-2 md:grid-cols-3">
+          <Link href="/guides/exchange-rate-overseas-stock-return" className="rounded-lg border border-border p-3 text-sm hover:border-accent/50">환율과 해외주식 수익률 →</Link>
+          <Link href="/guides/rate-change-loan-interest" className="rounded-lg border border-border p-3 text-sm hover:border-accent/50">금리와 대출이자 →</Link>
+          <Link href="/guides/dividend-yield-checklist" className="rounded-lg border border-border p-3 text-sm hover:border-accent/50">배당수익률 체크리스트 →</Link>
+        </div>
+      </section>
     </div>
   );
 }
@@ -55,6 +67,7 @@ function CurrencyCalculator() {
           type="number"
           value={amount}
           onChange={e => setAmount(e.target.value)}
+          onBlur={() => track('tool_complete', { tool: 'currency' })}
           placeholder={direction === 'usd-to-krw' ? '달러 금액' : '원화 금액'}
           className="w-full px-4 py-3 bg-bg border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
         />
@@ -108,7 +121,10 @@ function DividendTaxCalculator() {
             { value: 'isa', label: 'ISA' },
             { value: 'irp', label: 'IRP' },
           ].map(opt => (
-            <button key={opt.value} onClick={() => setAccountType(opt.value as any)}
+            <button key={opt.value} onClick={() => {
+              setAccountType(opt.value as 'general' | 'isa' | 'irp');
+              track('tool_option', { tool: 'dividend_tax', account_type: opt.value });
+            }}
               className={`flex-1 py-2 rounded text-xs font-medium transition ${accountType === opt.value ? 'bg-accent text-black' : 'bg-border/50 text-text-secondary'}`}>
               {opt.label}
             </button>
@@ -119,6 +135,7 @@ function DividendTaxCalculator() {
           type="number"
           value={preTax}
           onChange={e => setPreTax(e.target.value)}
+          onBlur={() => track('tool_complete', { tool: 'dividend_tax' })}
           placeholder="세전 배당금 (원)"
           className="w-full px-4 py-3 bg-bg border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
         />

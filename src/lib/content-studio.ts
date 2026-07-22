@@ -11,6 +11,9 @@ export interface NewsArticleInput {
   positiveVotes?: number;
   negativeVotes?: number;
   externalTrendScore?: number;
+  externalEngagementScore?: number;
+  externalSearchInterest?: number;
+  externalMetricProvider?: string;
   publishedAt?: string;
 }
 
@@ -110,8 +113,10 @@ export function buildContentOpportunities(
     if (!article?.id || !article?.title) continue;
     const key = article.sourceUrl || article.title.trim().toLowerCase();
     const previous = deduped.get(key);
-    const articleSignal = (article.viewCount || 0) + (article.externalTrendScore || 0);
-    const previousSignal = (previous?.viewCount || 0) + (previous?.externalTrendScore || 0);
+    const articleSignal = (article.viewCount || 0) + (article.externalTrendScore || 0)
+      + (article.externalEngagementScore || 0) + (article.externalSearchInterest || 0);
+    const previousSignal = (previous?.viewCount || 0) + (previous?.externalTrendScore || 0)
+      + (previous?.externalEngagementScore || 0) + (previous?.externalSearchInterest || 0);
     if (!previous || articleSignal > previousSignal) {
       deduped.set(key, article);
     }
@@ -141,6 +146,8 @@ function scoreOpportunity(
   const freshness = Math.max(0, 24 * (1 - ageHours / 48));
   const popularity = Math.min(22, Math.log1p(Math.max(0, article.viewCount || 0)) * 3.2);
   const externalTrend = Math.min(12, Math.max(0, article.externalTrendScore || 0) / 200 * 12);
+  const externalEngagement = Math.min(8, Math.max(0, article.externalEngagementScore || 0) / 200 * 8);
+  const searchInterest = Math.min(8, Math.max(0, article.externalSearchInterest || 0) / 100 * 8);
   const engagement = Math.min(
     8,
     (article.commentCount || 0) * 1.5 +
@@ -164,7 +171,7 @@ function scoreOpportunity(
   const riskPenalty = riskFlags.length * 2;
   const score = Math.max(
     1,
-    Math.min(100, Math.round(relevance + freshness + popularity + externalTrend + engagement + marketMovement + explanationValue - riskPenalty)),
+    Math.min(100, Math.round(relevance + freshness + popularity + externalTrend + externalEngagement + searchInterest + engagement + marketMovement + explanationValue - riskPenalty)),
   );
 
   const category = article.category || 'DOMESTIC';
@@ -177,6 +184,12 @@ function scoreOpportunity(
 
   if ((article.externalTrendScore || 0) > 0) {
     signals.push(`외부 트렌드 신호: ${Math.max(0, article.externalTrendScore || 0).toLocaleString()}`);
+  }
+  if ((article.externalEngagementScore || 0) > 0) {
+    signals.push(`원문 공개 참여 점수: ${Math.round(article.externalEngagementScore || 0)}`);
+  }
+  if (typeof article.externalSearchInterest === 'number') {
+    signals.push(`네이버 DataLab 분야 검색 관심도: ${Math.round(article.externalSearchInterest)}/100`);
   }
 
   if (relatedIndicators.length) {

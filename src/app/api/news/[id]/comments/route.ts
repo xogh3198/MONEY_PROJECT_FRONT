@@ -4,12 +4,15 @@ const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   const search = request.nextUrl.searchParams.toString();
 
   try {
     const res = await fetch(
-      `${NEWS_API}/api/forum/comments/${params.id}${search ? `?${search}` : ''}`,
+      `${NEWS_API}/api/forum/comments/${id}${search ? `?${search}` : ''}`,
       { cache: 'no-store' },
     );
     const data = await res.json();
@@ -19,7 +22,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   const authHeader = request.headers.get('Authorization') || '';
 
   try {
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         'Content-Type': 'application/json',
         Authorization: authHeader,
       },
-      body: JSON.stringify({ articleId: params.id, content: body.content }),
+      body: JSON.stringify({ articleId: id, content: body.content }),
       cache: 'no-store',
     });
     const data = await res.json().catch(() => ({}));

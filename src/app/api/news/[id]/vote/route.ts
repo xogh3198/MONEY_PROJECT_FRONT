@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8083';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const authHeader = request.headers.get('Authorization') || '';
 
   try {
     const body = await request.json();
-    const res = await fetch(`${NEWS_API}/api/forum/articles/${params.id}/vote`, {
+    const res = await fetch(`${NEWS_API}/api/forum/articles/${id}/vote`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

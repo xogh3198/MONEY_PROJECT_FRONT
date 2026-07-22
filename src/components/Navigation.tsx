@@ -5,12 +5,15 @@ import { useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
   { href: '/', label: '홈', icon: '🏠' },
+  { href: '/briefing', label: '브리핑', icon: '⚡' },
   { href: '/forum', label: '뉴스', icon: '📰' },
   { href: '/market', label: '시장', icon: '📊' },
   { href: '/calendar', label: '캘린더', icon: '📅' },
   { href: '/tools', label: '도구', icon: '🛠' },
   { href: '/dividend', label: '배당', icon: '💰' },
 ];
+
+const MOBILE_NAV_ITEMS = [NAV_ITEMS[0], NAV_ITEMS[1], NAV_ITEMS[2], NAV_ITEMS[3], NAV_ITEMS[5]];
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -47,7 +50,7 @@ export default function Navigation() {
             {NAV_ITEMS.map(item => (
               <Link key={item.href} href={item.href}
                 className={`px-3 py-1.5 rounded text-sm transition ${
-                  pathname === item.href ? 'text-accent bg-accent/10' : 'text-text-secondary hover:text-text-primary'
+                  isActive(pathname, item.href) ? 'text-accent bg-accent/10' : 'text-text-secondary hover:text-text-primary'
                 }`}>
                 {item.label}
               </Link>
@@ -86,10 +89,10 @@ export default function Navigation() {
       {/* 모바일 하단 탭바 */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
         <div className="flex justify-around py-1.5">
-          {NAV_ITEMS.slice(0, 5).map(item => (
+          {MOBILE_NAV_ITEMS.map(item => (
             <Link key={item.href} href={item.href}
               className={`flex flex-col items-center py-1 px-2 ${
-                pathname === item.href ? 'text-accent' : 'text-text-secondary'
+                isActive(pathname, item.href) ? 'text-accent' : 'text-text-secondary'
               }`}>
               <span className="text-lg">{item.icon}</span>
               <span className="text-[10px] mt-0.5">{item.label}</span>
@@ -99,4 +102,8 @@ export default function Navigation() {
       </nav>
     </>
   );
+}
+
+function isActive(pathname: string, href: string): boolean {
+  return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 }

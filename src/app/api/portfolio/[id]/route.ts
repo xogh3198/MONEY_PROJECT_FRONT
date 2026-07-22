@@ -6,12 +6,13 @@ export const dynamic = 'force-dynamic';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authHeader = request.headers.get('Authorization') || '';
   const body = await request.json();
   try {
-    const res = await fetch(`${ENGINE_API}/api/portfolios/${params.id}`, {
+    const res = await fetch(`${ENGINE_API}/api/portfolios/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -28,11 +29,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authHeader = request.headers.get('Authorization') || '';
   try {
-    const res = await fetch(`${ENGINE_API}/api/portfolios/${params.id}`, {
+    const res = await fetch(`${ENGINE_API}/api/portfolios/${id}`, {
       method: 'DELETE',
       headers: { Authorization: authHeader },
     });

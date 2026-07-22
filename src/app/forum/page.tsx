@@ -2,16 +2,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ForumTabs from '@/components/forum/ForumTabs';
+import EngagementMetrics from '@/components/news/EngagementMetrics';
+import { CATEGORY_LABELS, NewsArticle } from '@/lib/news';
 
 type Category = 'ALL' | 'DOMESTIC' | 'OVERSEAS' | 'FOREX' | 'RATE' | 'CRYPTO';
 type TabType = 'hot' | 'realtime';
-
-interface Article {
-  id: string; title: string; summary: string; sourceName: string; sourceUrl?: string;
-  category: string; sentiment: string; viewCount: number;
-  commentCount: number; positiveVotes: number; negativeVotes: number;
-  publishedAt: string;
-}
 
 const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'ALL', label: '전체' },
@@ -25,7 +20,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 export default function ForumPage() {
   const [tab, setTab] = useState<TabType>('realtime');
   const [category, setCategory] = useState<Category>('ALL');
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -157,16 +152,12 @@ export default function ForumPage() {
   );
 }
 
-function ArticleRow({ article, rank, showRank }: { article: Article; rank: number; showRank: boolean }) {
+function ArticleRow({ article, rank, showRank }: { article: NewsArticle; rank: number; showRank: boolean }) {
   const sentimentLabel = {
     POSITIVE: { text: '긍정', color: 'text-[#f85149] bg-[#f85149]/10' },
     NEGATIVE: { text: '부정', color: 'text-[#58a6ff] bg-[#58a6ff]/10' },
     NEUTRAL: { text: '중립', color: 'text-text-secondary bg-border/50' },
   }[article.sentiment] || { text: '중립', color: 'text-text-secondary bg-border/50' };
-
-  const categoryMap: Record<string, string> = {
-    DOMESTIC: '국내증시', OVERSEAS: '해외증시', FOREX: '환율', RATE: '금리', CRYPTO: '암호화폐',
-  };
 
   return (
     <Link href={`/forum/news/${article.id}`} className="block px-5 py-4 hover:bg-[#1c2129] transition">
@@ -184,7 +175,7 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
           {sentimentLabel.text}
         </span>
         <span className="px-2 py-0.5 rounded text-[10px] bg-border/50 text-text-secondary">
-          {categoryMap[article.category] || article.category}
+          {CATEGORY_LABELS[article.category] || article.category}
         </span>
       </div>
       <h3 className="text-[14px] font-semibold text-text-primary mb-1 leading-snug">
@@ -194,12 +185,7 @@ function ArticleRow({ article, rank, showRank }: { article: Article; rank: numbe
       {article.summary && (
         <p className="text-[12px] text-text-secondary leading-relaxed mb-2 line-clamp-2">{article.summary}</p>
       )}
-      <div className="flex items-center gap-4 text-[11px] text-text-secondary" aria-label="InvestBoard 내부 반응">
-        <span>👁 {(article.viewCount || 0).toLocaleString()}</span>
-        <span>💬 {(article.commentCount || 0).toLocaleString()}</span>
-        <span className="text-[#f85149]">👍 {(article.positiveVotes || 0).toLocaleString()}</span>
-        <span className="text-[#58a6ff]">👎 {(article.negativeVotes || 0).toLocaleString()}</span>
-      </div>
+      <EngagementMetrics article={article} compact />
     </Link>
   );
 }

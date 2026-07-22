@@ -3,17 +3,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchIndicators, fetchHotNews } from '@/lib/api';
 import { IndicatorSkeleton, NewsListSkeleton } from '@/components/Skeleton';
+import EngagementMetrics from '@/components/news/EngagementMetrics';
+import TrackedLink from '@/components/analytics/TrackedLink';
+import { CATEGORY_LABELS, NewsArticle } from '@/lib/news';
 
 interface Indicator { type: string; name: string; value: number; changePercent: number; }
-interface NewsItem {
-  id: string; title: string; summary?: string; sourceName: string; publishedAt: string;
-  commentCount: number; positiveVotes: number; negativeVotes: number;
-  category: string; sentiment: string; viewCount: number; sourceUrl?: string;
-}
-
 export default function HomePage() {
   const [indicators, setIndicators] = useState<Indicator[]>([]);
-  const [news, setNews] = useState<NewsItem[]>([]);
+  const [news, setNews] = useState<NewsArticle[]>([]);
   const [loadingIndicators, setLoadingIndicators] = useState(true);
   const [loadingNews, setLoadingNews] = useState(true);
 
@@ -24,6 +21,33 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
+      <section className="overflow-hidden rounded-xl border border-accent/25 bg-gradient-to-br from-accent/10 via-card to-card">
+        <div className="flex flex-col gap-3 border-b border-border/70 px-5 py-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="mb-1 text-[10px] font-semibold tracking-widest text-accent">DAILY MONEY BRIEFING</p>
+            <h1 className="text-xl font-bold md:text-2xl">오늘 내 돈에 영향을 주는 3가지</h1>
+            <p className="mt-2 text-xs text-text-secondary">뉴스·시장지표·공개 관심 신호를 연결해 확인할 포인트만 정리합니다.</p>
+          </div>
+          <TrackedLink href="/briefing" eventName="home_briefing_click" className="w-fit rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-black hover:opacity-90">
+            1분 브리핑 보기 →
+          </TrackedLink>
+        </div>
+        <div className="grid md:grid-cols-3">
+          {loadingNews ? (
+            <div className="md:col-span-3"><NewsListSkeleton /></div>
+          ) : news.slice(0, 3).map((item, index) => (
+            <Link key={item.id} href={`/briefing#news-${item.id}`} className="border-b border-border/60 p-4 hover:bg-white/[0.03] md:border-b-0 md:border-r last:border-0">
+              <div className="mb-2 flex items-center justify-between text-[10px] text-text-secondary">
+                <span>0{index + 1} · {CATEGORY_LABELS[item.category] || item.category}</span>
+                {typeof item.externalSearchInterest === 'number' && <span className="text-accent">분야관심 {Math.round(item.externalSearchInterest)}</span>}
+              </div>
+              <h2 className="line-clamp-2 text-sm font-semibold leading-6">{item.title}</h2>
+              <p className="mt-2 text-[11px] text-accent-blue">영향과 다음 확인 지표 보기 →</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* 시장 지표 */}
       <section>
         <div className="flex items-center justify-between mb-3">
@@ -57,7 +81,7 @@ export default function HomePage() {
           <div className="px-5 py-3 border-b border-border flex justify-between items-center">
             <div>
               <h2 className="text-sm font-bold">🔥 인기 경제뉴스</h2>
-              <p className="mt-0.5 text-[10px] text-text-secondary">InvestBoard 반응·외부 트렌드·최신성 반영</p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">내부 반응·원문 공개 반응·검색 관심도와 최신성 반영</p>
             </div>
             <Link href="/forum" className="text-xs text-accent-blue hover:underline">인기 탭 →</Link>
           </div>
@@ -78,15 +102,12 @@ export default function HomePage() {
                   {item.summary && (
                     <p className="text-[11px] text-text-secondary truncate">{item.summary}</p>
                   )}
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-secondary">
+                  <div className="mt-1 mb-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-secondary">
                     <span>{item.sourceName}</span>
                     <span>·</span>
-                    <span>{item.category}</span>
-                    <span className="ml-auto">👁 {(item.viewCount || 0).toLocaleString()}</span>
-                    <span>💬 {(item.commentCount || 0).toLocaleString()}</span>
-                    <span className="text-[#f85149]">👍 {(item.positiveVotes || 0).toLocaleString()}</span>
-                    <span className="text-[#58a6ff]">👎 {(item.negativeVotes || 0).toLocaleString()}</span>
+                    <span>{CATEGORY_LABELS[item.category] || item.category}</span>
                   </div>
+                  <EngagementMetrics article={item} compact />
                 </div>
               </Link>
             ))}
@@ -127,6 +148,13 @@ export default function HomePage() {
                 <div>
                   <div className="text-sm font-medium">종목 검색</div>
                   <div className="text-[11px] text-text-secondary">주식 정보 조회</div>
+                </div>
+              </Link>
+              <Link href="/guides" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">
+                <div className="w-8 h-8 rounded-lg bg-[#58a6ff]/20 flex items-center justify-center text-lg">📘</div>
+                <div>
+                  <div className="text-sm font-medium">금융 가이드</div>
+                  <div className="text-[11px] text-text-secondary">환율·금리·배당을 숫자로 이해</div>
                 </div>
               </Link>
               <Link href="/dividend" className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-[#1c2129] transition">

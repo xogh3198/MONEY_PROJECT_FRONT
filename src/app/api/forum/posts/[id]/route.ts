@@ -4,9 +4,12 @@ const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   try {
-    const res = await fetch(`${NEWS_API}/api/forum/posts/${params.id}`, {
+    const res = await fetch(`${NEWS_API}/api/forum/posts/${id}`, {
       headers: { 'Content-Type': 'application/json' },
     });
     const data = await res.json();
@@ -16,11 +19,12 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   const authHeader = request.headers.get('Authorization') || '';
   const body = await request.json();
   try {
-    const res = await fetch(`${NEWS_API}/api/forum/posts/${params.id}`, {
+    const res = await fetch(`${NEWS_API}/api/forum/posts/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -35,10 +39,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   const authHeader = request.headers.get('Authorization') || '';
   try {
-    const res = await fetch(`${NEWS_API}/api/forum/posts/${params.id}`, {
+    const res = await fetch(`${NEWS_API}/api/forum/posts/${id}`, {
       method: 'DELETE',
       headers: { Authorization: authHeader },
     });
