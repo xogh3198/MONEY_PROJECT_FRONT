@@ -33,6 +33,7 @@ export interface NewsArticle {
   externalSearchInterestSource?: string | null;
   externalSearchInterestUpdatedAt?: string | null;
   searchInterestPopularityScore?: number;
+  integratedViewCount?: number;
   popularityScore?: number;
   publishedAt: string;
 }
@@ -43,6 +44,19 @@ export function searchInterestPopularityPoints(article: NewsArticle): number {
   }
   if (typeof article.externalSearchInterest !== 'number') return 0;
   return Math.round(Math.max(0, Math.min(100, article.externalSearchInterest)) * 100);
+}
+
+export function integratedViewCount(article: NewsArticle): number {
+  if (typeof article.integratedViewCount === 'number') {
+    return Math.max(0, Math.round(article.integratedViewCount));
+  }
+  return Math.max(0, Math.round(article.viewCount || 0)) + searchInterestPopularityPoints(article);
+}
+
+export function searchInterestLabel(article: NewsArticle): string {
+  return article.externalSearchInterestSource === 'NAVER_DATALAB_ARTICLE_KEYWORDS'
+    ? '기사 검색 관심도'
+    : '분야 검색 관심도(보조)';
 }
 
 export function hasExternalCounts(article: NewsArticle): boolean {

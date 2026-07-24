@@ -5,7 +5,7 @@ import { fetchIndicators, fetchHotNews } from '@/lib/api';
 import { IndicatorSkeleton, NewsListSkeleton } from '@/components/Skeleton';
 import EngagementMetrics from '@/components/news/EngagementMetrics';
 import TrackedLink from '@/components/analytics/TrackedLink';
-import { CATEGORY_LABELS, NewsArticle, searchInterestPopularityPoints } from '@/lib/news';
+import { CATEGORY_LABELS, integratedViewCount, NewsArticle } from '@/lib/news';
 
 interface Indicator { type: string; name: string; value: number; changePercent: number; }
 export default function HomePage() {
@@ -41,7 +41,7 @@ export default function HomePage() {
                 <span>0{index + 1} · {CATEGORY_LABELS[item.category] || item.category}</span>
                 {typeof item.externalSearchInterest === 'number' && (
                   <span className="text-accent">
-                    검색관심 {Math.round(item.externalSearchInterest)}/100 · +{searchInterestPopularityPoints(item).toLocaleString()}점
+                    조회 {integratedViewCount(item).toLocaleString()}
                   </span>
                 )}
               </div>
@@ -85,7 +85,7 @@ export default function HomePage() {
           <div className="px-5 py-3 border-b border-border flex justify-between items-center">
             <div>
               <h2 className="text-sm font-bold">🔥 인기 경제뉴스</h2>
-              <p className="mt-0.5 text-[10px] text-text-secondary">DataLab 검색 관심도×100·내부 반응·원문 공개 반응·최신성 반영</p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">기사별 검색 관심 환산 조회·내부 반응·원문 공개 반응·최신성 반영</p>
             </div>
             <Link href="/forum" className="text-xs text-accent-blue hover:underline">인기 탭 →</Link>
           </div>
