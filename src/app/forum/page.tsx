@@ -18,7 +18,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 ];
 
 export default function ForumPage() {
-  const [tab, setTab] = useState<TabType>('realtime');
+  const [tab, setTab] = useState<TabType>('hot');
   const [category, setCategory] = useState<Category>('ALL');
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +82,7 @@ export default function ForumPage() {
       <div className="mb-5">
         <h1 className="text-xl font-bold">경제뉴스</h1>
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-xs text-text-secondary">실시간 뉴스와 InvestBoard 반응·외부 트렌드 기반 인기 기사</p>
+          <p className="text-xs text-text-secondary">DataLab 검색 관심도×100과 검증된 반응 신호로 정렬한 인기 기사</p>
           {tab === 'realtime' && (
             <span className="text-[10px] text-accent animate-pulse">● LIVE</span>
           )}
@@ -168,9 +168,6 @@ function ArticleRow({ article, rank, showRank }: { article: NewsArticle; rank: n
         <span className="text-text-secondary">{article.sourceName}</span>
         <span className="text-border">·</span>
         <span className="text-text-secondary">{timeAgo(article.publishedAt)}</span>
-        {showRank && (
-          <span className="text-[10px] text-text-secondary ml-1">👁 {(article.viewCount || 0).toLocaleString()}</span>
-        )}
         <span className={`ml-auto px-2 py-0.5 rounded text-[10px] font-medium ${sentimentLabel.color}`}>
           {sentimentLabel.text}
         </span>

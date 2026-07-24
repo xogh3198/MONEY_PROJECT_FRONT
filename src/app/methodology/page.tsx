@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/methodology' },
 };
 
-const UPDATED_AT = '2026-07-22';
+const UPDATED_AT = '2026-07-24';
 
 export default function MethodologyPage() {
   return (
@@ -30,7 +30,7 @@ export default function MethodologyPage() {
           </div>
           <div>
             <dt className="font-semibold text-text-primary">검색 관심도</dt>
-            <dd>네이버 데이터랩에서 코스피·미국증시·환율·금리·암호자산 등 기사 카테고리별 키워드 그룹을 비교한 상대 지수(기간 내 최대값 100)입니다. 제목별 검색량이나 기사 자체 조회수가 아닙니다.</dd>
+            <dd>네이버 데이터랩에서 코스피·미국증시·환율·금리·암호자산 등 기사 카테고리별 키워드 그룹을 비교한 상대 지수(기간 내 최대값 100)입니다. 제목별 검색량이나 기사 자체 조회수가 아니므로 조회수 칸에는 합산하지 않습니다.</dd>
           </div>
           <div>
             <dt className="font-semibold text-text-primary">InvestBoard 내부 반응</dt>
@@ -53,7 +53,7 @@ export default function MethodologyPage() {
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">인기 순위와 브리핑</h2>
         <p className="text-sm leading-6 text-text-secondary">
-          최신성, 자체 참여, 확인된 외부 관심 신호, 검색 관심도를 함께 사용합니다. 특정 플랫폼의 숫자 하나만으로 순위를 결정하지 않으며, 원문을 단순 복제하지 않고 시장 맥락·영향 경로·추가 확인 항목을 덧붙입니다.
+          최신성, 자체 참여, 확인된 외부 관심 신호, 검색 관심도를 함께 사용합니다. DataLab 관심도는 0~100 값을 100배 한 내부 인기 점수로 반영하되 실제 조회수로 표시하지 않습니다. 카테고리 수준의 관심 신호이므로 같은 분야 기사 안에서는 최신성과 실제 반응이 순서를 가릅니다.
         </p>
       </section>
 

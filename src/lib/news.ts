@@ -32,7 +32,17 @@ export interface NewsArticle {
   externalSearchInterest?: number | null;
   externalSearchInterestSource?: string | null;
   externalSearchInterestUpdatedAt?: string | null;
+  searchInterestPopularityScore?: number;
+  popularityScore?: number;
   publishedAt: string;
+}
+
+export function searchInterestPopularityPoints(article: NewsArticle): number {
+  if (typeof article.searchInterestPopularityScore === 'number') {
+    return Math.max(0, Math.round(article.searchInterestPopularityScore));
+  }
+  if (typeof article.externalSearchInterest !== 'number') return 0;
+  return Math.round(Math.max(0, Math.min(100, article.externalSearchInterest)) * 100);
 }
 
 export function hasExternalCounts(article: NewsArticle): boolean {

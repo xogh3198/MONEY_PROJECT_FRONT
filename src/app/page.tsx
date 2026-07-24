@@ -5,7 +5,7 @@ import { fetchIndicators, fetchHotNews } from '@/lib/api';
 import { IndicatorSkeleton, NewsListSkeleton } from '@/components/Skeleton';
 import EngagementMetrics from '@/components/news/EngagementMetrics';
 import TrackedLink from '@/components/analytics/TrackedLink';
-import { CATEGORY_LABELS, NewsArticle } from '@/lib/news';
+import { CATEGORY_LABELS, NewsArticle, searchInterestPopularityPoints } from '@/lib/news';
 
 interface Indicator { type: string; name: string; value: number; changePercent: number; }
 export default function HomePage() {
@@ -39,7 +39,11 @@ export default function HomePage() {
             <Link key={item.id} href={`/briefing#news-${item.id}`} className="border-b border-border/60 p-4 hover:bg-white/[0.03] md:border-b-0 md:border-r last:border-0">
               <div className="mb-2 flex items-center justify-between text-[10px] text-text-secondary">
                 <span>0{index + 1} · {CATEGORY_LABELS[item.category] || item.category}</span>
-                {typeof item.externalSearchInterest === 'number' && <span className="text-accent">분야관심 {Math.round(item.externalSearchInterest)}</span>}
+                {typeof item.externalSearchInterest === 'number' && (
+                  <span className="text-accent">
+                    검색관심 {Math.round(item.externalSearchInterest)}/100 · +{searchInterestPopularityPoints(item).toLocaleString()}점
+                  </span>
+                )}
               </div>
               <h2 className="line-clamp-2 text-sm font-semibold leading-6">{item.title}</h2>
               <p className="mt-2 text-[11px] text-accent-blue">영향과 다음 확인 지표 보기 →</p>
@@ -81,7 +85,7 @@ export default function HomePage() {
           <div className="px-5 py-3 border-b border-border flex justify-between items-center">
             <div>
               <h2 className="text-sm font-bold">🔥 인기 경제뉴스</h2>
-              <p className="mt-0.5 text-[10px] text-text-secondary">내부 반응·원문 공개 반응·검색 관심도와 최신성 반영</p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">DataLab 검색 관심도×100·내부 반응·원문 공개 반응·최신성 반영</p>
             </div>
             <Link href="/forum" className="text-xs text-accent-blue hover:underline">인기 탭 →</Link>
           </div>

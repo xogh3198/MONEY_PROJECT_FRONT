@@ -3,6 +3,7 @@ import {
   externalStatusMessage,
   hasExternalCounts,
   NewsArticle,
+  searchInterestPopularityPoints,
 } from '@/lib/news';
 
 interface Props {
@@ -16,6 +17,7 @@ export default function EngagementMetrics({ article, compact = false, showUnavai
   const searchInterest = typeof article.externalSearchInterest === 'number'
     ? article.externalSearchInterest
     : null;
+  const searchPopularityPoints = searchInterestPopularityPoints(article);
 
   if (compact) {
     return (
@@ -29,7 +31,11 @@ export default function EngagementMetrics({ article, compact = false, showUnavai
         {(externalAvailable || searchInterest !== null) && (
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-accent-blue">
             {externalAvailable && <span>원문 {formatExternalCounts(article)}</span>}
-            {searchInterest !== null && <span>분야 검색관심 {Math.round(searchInterest)}/100</span>}
+            {searchInterest !== null && (
+              <span title="실제 조회수가 아닌 인기 정렬용 점수">
+                분야 검색관심 {Math.round(searchInterest)}/100 · 인기 +{searchPopularityPoints.toLocaleString()}점
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -79,7 +85,9 @@ export default function EngagementMetrics({ article, compact = false, showUnavai
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
               <div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(0, Math.min(100, searchInterest))}%` }} />
             </div>
-            <p className="mt-2 text-[10px] text-text-secondary">기사 카테고리 키워드 그룹의 상대값이며 기사 조회수나 제목별 검색량이 아닙니다.</p>
+            <p className="mt-2 text-[10px] text-text-secondary">
+              인기 순위에 +{searchPopularityPoints.toLocaleString()}점 반영 · 기사 조회수가 아닌 카테고리 검색량의 상대값입니다.
+            </p>
           </div>
         )}
       </section>
