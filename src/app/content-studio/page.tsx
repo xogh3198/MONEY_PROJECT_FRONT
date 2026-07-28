@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useState } from 'react';
 import {
   ContentOpportunity,
   ContentScriptDraft,
+  VideoRenderJob,
+  VideoRenderQuality,
 } from '@/lib/content-studio';
 
 const STORAGE_KEY = 'investboard_content_studio_key';
@@ -63,7 +65,14 @@ export default function ContentStudioPage() {
   const [operationsStatus, setOperationsStatus] = useState<OperationsStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [reviews, setReviews] = useState<Record<string, ReviewRecord>>({});
+  const [videoJob, setVideoJob] = useState<VideoRenderJob | null>(null);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoLoading, setVideoLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => () => {
+    if (videoUrl) URL.revokeObjectURL(videoUrl);
+  }, [videoUrl]);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) || '';
@@ -156,6 +165,8 @@ export default function ContentStudioPage() {
   const createDraft = async (opportunity: ContentOpportunity) => {
     setSelected(opportunity);
     setDraft(null);
+    setVideoJob(null);
+    setVideoUrl('');
     setDraftLoading(true);
     setError('');
     try {
@@ -177,6 +188,62 @@ export default function ContentStudioPage() {
     }
   };
 
+  const renderVideo = async (quality: VideoRenderQuality) => {
+    if (!draft || reviews[draft.experimentId]?.decision !== 'APPROVE') return;
+    setVideoLoading(true);
+    setVideoJob(null);
+    setVideoUrl('');
+    setError('');
+    try {
+      const submitResponse = await fetch('/api/content-studio/video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-content-studio-key': accessKey,
+        },
+        body: JSON.stringify({ draft, quality }),
+      });
+      const submitted = await submitResponse.json();
+      if (!submitResponse.ok) throw new Error(submitted.error || '영상 렌더를 시작하지 못했습니다.');
+      let current = submitted as VideoRenderJob;
+      setVideoJob(current);
+
+      const deadline = Date.now() + 20 * 60 * 1000;
+      while (current.status === 'QUEUED' || current.status === 'RENDERING') {
+        if (Date.now() > deadline) {
+          throw new Error('영상 렌더가 20분 안에 끝나지 않았습니다. 작업 ID로 상태를 다시 확인하세요.');
+        }
+        await new Promise(resolve => window.setTimeout(resolve, 3_000));
+        const statusResponse = await fetch(`/api/content-studio/video/${current.id}`, {
+          cache: 'no-store',
+          headers: { 'x-content-studio-key': accessKey },
+        });
+        const statusData = await statusResponse.json();
+        if (!statusResponse.ok) throw new Error(statusData.error || '영상 상태를 확인하지 못했습니다.');
+        current = statusData as VideoRenderJob;
+        setVideoJob(current);
+      }
+      if (current.status === 'FAILED') {
+        throw new Error(current.errorMessage || '영상 렌더에 실패했습니다.');
+      }
+
+      const fileResponse = await fetch(`/api/content-studio/video/${current.id}/file`, {
+        cache: 'no-store',
+        headers: { 'x-content-studio-key': accessKey },
+      });
+      if (!fileResponse.ok) {
+        const fileError = await fileResponse.json().catch(() => ({}));
+        throw new Error(fileError.error || '완료된 영상 파일을 불러오지 못했습니다.');
+      }
+      const objectUrl = URL.createObjectURL(await fileResponse.blob());
+      setVideoUrl(objectUrl);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '영상 렌더에 실패했습니다.');
+    } finally {
+      setVideoLoading(false);
+    }
+  };
+
   const disconnect = () => {
     localStorage.removeItem(STORAGE_KEY);
     setAccessKey('');
@@ -184,6 +251,8 @@ export default function ContentStudioPage() {
     setOpportunities([]);
     setSelected(null);
     setDraft(null);
+    setVideoJob(null);
+    setVideoUrl('');
     setError('');
   };
 
@@ -376,6 +445,10 @@ export default function ContentStudioPage() {
               loading={draftLoading}
               selected={selected}
               review={draft ? reviews[draft.experimentId] : undefined}
+              videoJob={videoJob}
+              videoUrl={videoUrl}
+              videoLoading={videoLoading}
+              onRender={quality => void renderVideo(quality)}
               onReview={(decision) => {
                 if (draft) saveReview(draft.experimentId, 'draft', draft.title, decision);
               }}
@@ -393,12 +466,20 @@ function DraftPanel({
   loading,
   selected,
   review,
+  videoJob,
+  videoUrl,
+  videoLoading,
+  onRender,
   onReview,
 }: {
   draft: ContentScriptDraft | null;
   loading: boolean;
   selected: ContentOpportunity | null;
   review?: ReviewRecord;
+  videoJob: VideoRenderJob | null;
+  videoUrl: string;
+  videoLoading: boolean;
+  onRender: (quality: VideoRenderQuality) => void;
   onReview: (decision: ReviewDecision) => void;
 }) {
   const copyDraft = async () => {
@@ -492,7 +573,119 @@ function DraftPanel({
             </ReviewButton>
           </div>
         </div>
+        <VideoRenderPanel
+          approved={review?.decision === 'APPROVE'}
+          job={videoJob}
+          videoUrl={videoUrl}
+          loading={videoLoading}
+          onRender={onRender}
+        />
       </div>
+    </div>
+  );
+}
+
+function VideoRenderPanel({
+  approved,
+  job,
+  videoUrl,
+  loading,
+  onRender,
+}: {
+  approved: boolean;
+  job: VideoRenderJob | null;
+  videoUrl: string;
+  loading: boolean;
+  onRender: (quality: VideoRenderQuality) => void;
+}) {
+  return (
+    <div className="border-t border-border pt-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-xs font-bold text-text-secondary">AI 음성·자막 MP4</h3>
+          <p className="mt-1 text-[11px] leading-5 text-text-secondary">
+            대본을 ‘사용 가능’으로 승인한 뒤에만 렌더합니다. 외부 게시나 계정 업로드는 하지 않습니다.
+          </p>
+        </div>
+        {job && (
+          <span className={`text-[10px] font-semibold ${
+            job.status === 'COMPLETED' ? 'text-[#3fb950]'
+              : job.status === 'FAILED' ? 'text-[#f85149]'
+                : 'text-[#d29922]'
+          }`}>
+            {job.status}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          onClick={() => onRender('PREVIEW')}
+          disabled={!approved || loading}
+          className="rounded-lg bg-[#238636] px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {loading && job?.quality === 'PREVIEW' ? '미리보기 제작 중…' : '540×960 미리보기'}
+        </button>
+        <button
+          onClick={() => onRender('FINAL')}
+          disabled={!approved || loading}
+          className="rounded-lg border border-border px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {loading && job?.quality === 'FINAL' ? '최종본 제작 중…' : '1080×1920 최종본'}
+        </button>
+      </div>
+
+      {!approved && (
+        <p className="mt-2 text-[11px] text-[#d29922]">먼저 사실·출처·권리를 검토하고 ‘사용 가능’을 선택하세요.</p>
+      )}
+
+      {job && (
+        <div className="mt-3 rounded-lg border border-border bg-[#0d1117] p-3">
+          <div className="flex items-center justify-between text-[11px]">
+            <span>{job.stage}</span>
+            <span>{job.progress}%</span>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
+            <div
+              className="h-full rounded-full bg-accent transition-all"
+              style={{ width: `${Math.max(2, job.progress)}%` }}
+            />
+          </div>
+          <div className="mt-2 text-[10px] text-text-secondary">
+            작업 {job.id.slice(0, 8)} · {job.voiceProvider || '음성 확인 중'}
+            {job.durationSeconds ? ` · ${job.durationSeconds.toFixed(1)}초` : ''}
+          </div>
+          {job.errorMessage && <p className="mt-2 text-[11px] text-[#f85149]">{job.errorMessage}</p>}
+        </div>
+      )}
+
+      {videoUrl && job?.status === 'COMPLETED' && (
+        <div className="mt-4">
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            src={videoUrl}
+            className="mx-auto aspect-[9/16] max-h-[560px] w-full max-w-[315px] rounded-xl bg-black"
+          />
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <span className="text-[10px] text-text-secondary">게시 전 사실·자막·이미지 권리를 다시 확인하세요.</span>
+            <a
+              href={videoUrl}
+              download={`investboard-${job.experimentId}-${job.quality.toLowerCase()}.mp4`}
+              className="flex-shrink-0 text-xs font-semibold text-accent-blue hover:underline"
+            >
+              MP4 다운로드
+            </a>
+          </div>
+          {job.assetCredits && (
+            <details className="mt-3 text-[10px] text-text-secondary">
+              <summary className="cursor-pointer">이미지 출처 확인</summary>
+              <pre className="mt-2 whitespace-pre-wrap font-sans leading-5">{job.assetCredits}</pre>
+            </details>
+          )}
+        </div>
+      )}
     </div>
   );
 }

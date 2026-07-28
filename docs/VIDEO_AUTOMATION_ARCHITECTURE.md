@@ -318,6 +318,8 @@ SOURCE_PENDING
 |---|---|---|---|
 | Azure Speech F0 | 한국어 남녀 음성, 일부 한국어 음성의 감정 스타일, WordBoundary, 월 50만 자 무료 | 별도 Azure 계정·리소스·키 필요 | 무료 품질·억양 비교 1순위 |
 | Amazon Polly | 기존 AWS와 결합, 한국어 `Seoyeon`·`Jihye`, word/sentence speech marks | 한국어 전용 감정 스타일이 제한적이고 프리 티어는 계정 조건 확인 필요 | 운영 연결 1순위 |
+| Typecast API | 한국어 감정형 음성과 한 호출의 음성·단어/문자 타임스탬프 응답 | API 키·voice ID·상업 이용 요금 확인 필요 | 코드 어댑터 구현, 승인 후 품질 비교 |
+| Supertone API | 한국어, 스타일·속도·피치 제어, 국내 콘텐츠에 맞는 표현력 | 무료 월 5분은 표시 조건이 있고 상업 운영은 요금제 확인 필요 | 한국어 프리미엄 음성 비교 후보 |
 | MeloTTS Korean | MIT, 한국어, CPU 실시간 추론, 외부 API 비용 없음 | 음성 품질·감정 표현·서버 자원과 모델 공급망을 직접 관리 | 완전 로컬 무료 fallback |
 | Google Cloud TTS | 한국어 음성, SSML `<mark>`, 월 100만~400만 자 무료 구간 | 결제 사용 설정과 별도 GCP 자격증명 필요 | 안정성 비교 후보 |
 | ElevenLabs | 표현력 높은 다국어 음성, 정밀 정렬 | 무료는 약 10~20분 수준이고 별도 계정·권리 관리 필요 | 유료 프리미엄 후보 |
@@ -330,6 +332,9 @@ Gemini TTS 60초 오디오는 공식 가격의 초당 25 오디오 토큰과 100
 API 비용을 완전히 없애려면 MeloTTS Korean을 별도 worker에서 실행할 수 있다. 모델 카드상 MIT이며 상업·비상업 사용이 가능하지만, 실제 배포 전 코드·모델·의존 데이터의 라이선스를 다시 고정하고 음질을 사람 평가한다. XTTS-v2는 한국어를 지원해도 모델 라이선스가 비상업용이므로 수익화 제품에는 사용하지 않는다.
 
 추천 실험은 동일한 대본 10개를 Amazon Polly, Azure F0, MeloTTS로 생성해 자연스러움·집중도·발음 오류·생성시간·비용을 블라인드 평가하는 것이다. 새 Azure 계정 생성은 사용자 승인 후 진행한다.
+
+현재 코드에는 Polly와 Typecast가 동일한 `VoiceProvider` 경계로 구현돼 있다. 기본값은 Polly이며,
+Typecast는 사용자가 별도 계정·약관·비용을 승인하고 키를 넣기 전에는 호출되지 않는다.
 
 ### 6.3 이미지·영상 자산
 
@@ -346,6 +351,14 @@ API 비용을 완전히 없애려면 MeloTTS Korean을 별도 worker에서 실�
 - Pixabay API는 이미지와 영상을 검색할 수 있고 콘텐츠 라이선스가 적용되지만, 결과 화면에서 출처 표시를 요청한다.
 - Pexels API는 이미지·영상 검색을 제공하며 생산 사용 전 API 약관과 표시 조건을 검토한다.
 - Unsplash API는 핫링크·사진가/Unsplash 표시·다운로드 이벤트 요구가 있어 렌더된 MP4 자산 파이프라인의 기본값으로 쓰지 않는다.
+
+영상 전달·변환 보조 후보:
+
+- Cloudinary는 이미지·영상 연결, 자막·텍스트·이미지 레이어, URL 변환을 제공한다. S3와 CDN까지
+  한 공급자로 단순화할 때 유용하지만, 현재 7장면 전체 타임라인을 직접 소유하려는 구조에서는
+  FFmpeg를 대체하기보다 선택형 저장·변환 어댑터가 적합하다.
+- Shotstack·Creatomate는 템플릿 편집과 렌더 운영을 빠르게 외주화할 때 유리하다. 10편 자체 렌더의
+  실패율 또는 수정 시간이 기준을 넘을 때만 동일한 내부 spec으로 비교한다.
 
 Veo 3.1은 8초 생성 영상을 만들 수 있지만 720p 기준 초당 $0.05~$0.40이다. 8초 한 장면만 써도 약 $0.40~$3.20이므로 기본 배경이 아니라 성과가 검증된 프리미엄 장면에만 사용한다.
 
@@ -434,6 +447,11 @@ HeyGen API는 아바타 또는 임의 이미지, 대본·음성, 자막, 9:16 �
 
 렌더는 API 요청 스레드에서 실행하지 않는다. 초기에는 DB 기반 큐와 별도 worker 컨테이너를 사용할 수 있고, Promotion Map 멀티테넌트 단계에서는 SQS와 ECS/Fargate 작업으로 옮긴다. 실패 작업은 DLQ 또는 동등한 실패 큐에서 재처리한다.
 
+첫 10편 기술 검증에서는 별도 서버 비용을 만들지 않기 위해 `news-service` 안의 단일 비동기
+executor를 사용한다. 동시에 한 편만 처리하고 대기열은 8개로 제한한다. API 응답 스레드는 렌더를
+기다리지 않는다. 렌더 CPU가 뉴스 수집·조회에 영향을 주거나 10편 성공률이 95% 미만이면 이 임시
+구조를 중단하고 렌더 컨테이너를 분리한다.
+
 ### 8.3 공급자 인터페이스
 
 ```text
@@ -499,6 +517,22 @@ AnalyticsProvider
 - 10편 연속 렌더 성공률 95% 이상
 - 잘린 자막·범위 밖 요소·무음·길이 오차 자동 검사
 
+2026-07-28 1차 구현:
+
+- `POST /api/content-videos/render`, 작업 상태, MP4 스트리밍 API와 DB 작업 이력
+- Amazon Polly Neural 음성과 speech marks 기반 구절 자막
+- Typecast의 음성+단어 타임스탬프 선택형 어댑터
+- Pixabay 세로 안전 검색, 작가·원본 페이지 크레딧, 실패 시 자체 생성 카드
+- 540×960 미리보기와 1080×1920 최종본, 느린 확대, ASS 한글 자막, H.264/AAC MP4
+- 한 작업씩 처리하는 비동기 큐와 실패 사유 저장
+- 자막 타이밍·ASS·자체 카드 단위 테스트 및 Java 17 타깃 전체 테스트 통과
+
+남은 완료 조건:
+
+- 실제 Money EC2의 Polly 권한으로 첫 MP4 렌더
+- 10편 연속 렌더 성공률·시간·EC2 CPU/메모리 측정
+- 영상 해상도·무음·검은 프레임·안전영역 자동 검사
+
 ### VE-003 — 콘텐츠 스튜디오 검수
 
 - 대본·장면 편집
@@ -511,6 +545,21 @@ AnalyticsProvider
 
 - 검수 이력이 브라우저가 아닌 서버에 남는다.
 - 승인되지 않은 영상은 외부 게시 상태로 갈 수 없다.
+
+2026-07-28 1차 구현:
+
+- 대본을 정확히 7장면 이미지 설명형 포맷으로 생성하고 장면별 자산 검색어를 구조화
+- 대본을 `사용 가능`으로 검수한 뒤에만 미리보기·최종본 렌더 버튼 활성화
+- 서버 작업 ID의 진행률·단계·오류 조회
+- 브라우저 비공개 MP4 재생, 다운로드, 이미지 출처 확인
+- 서버 간 렌더 키는 브라우저에 노출하지 않는 Next.js 프록시
+- Next.js Production 빌드와 ESLint 오류 0건
+
+남은 완료 조건:
+
+- 대본·장면 수정 UI
+- 자산별 선택·권리 승인과 검수 이력의 서버 저장
+- 음성 미리듣기와 동일 spec 버전 재렌더
 
 ### VE-004 — 외부 렌더 비교 실험
 
@@ -585,6 +634,23 @@ AnalyticsProvider
 
 저장소 내부 계약·UI·로컬 렌더·테스트·비공개 파일 생성은 위 승인을 받기 전에도 개발할 수 있다.
 
+### 12.1 현재 운영 연결에 필요한 수작업
+
+코드는 외부 계정 없이 배포 가능하지만 영상 기능은 안전하게 기본 비활성화돼 있다.
+
+1. 현재 Money EC2 인스턴스 프로파일에 최소 `polly:SynthesizeSpeech` 권한을 추가한다.
+2. GitHub Actions 서버 저장소 secret에 `VIDEO_RENDER_ENABLED=true`와
+   `VIDEO_RENDER_ACCESS_KEY=<충분히 긴 임의값>`을 넣는다.
+3. Vercel에는 같은 `VIDEO_RENDER_ACCESS_KEY`를 넣는다. 기존
+   `CONTENT_STUDIO_ACCESS_KEY`와 같은 값을 서버 GitHub secret에도 넣는다면 Vercel 신규 등록은
+   생략할 수 있지만, 키 회전과 권한 분리를 위해 별도 키를 권장한다.
+4. Pixabay 계정과 키를 사용하기로 승인한 경우에만 서버 secret `PIXABAY_API_KEY`를 넣는다.
+   없어도 자체 생성 카드로 영상은 만들어진다.
+5. Production을 다시 배포하고 콘텐츠 스튜디오에서 초안 승인 → 540×960 미리보기 순으로 확인한다.
+
+현재 로컬에 연결된 AWS 자격증명은 Money EC2가 있는 계정을 가리키지 않아, 다른 계정의 인스턴스에
+권한을 추가하지 않았다.
+
 ## 13. 확인한 공식 자료
 
 - [Gemini TTS](https://ai.google.dev/gemini-api/docs/speech-generation)
@@ -598,6 +664,10 @@ AnalyticsProvider
 - [Amazon Polly speech marks](https://docs.aws.amazon.com/polly/latest/dg/speechmarks.html)
 - [Amazon Polly 한국어 음성](https://docs.aws.amazon.com/polly/latest/dg/available-voices.html)
 - [Amazon Polly 가격과 무료 구간](https://aws.amazon.com/polly/pricing/)
+- [Typecast TTS 타임스탬프 API](https://typecast.ai/docs/api-reference/text-to-speech/text-to-speech-with-timestamps)
+- [Typecast API 개요](https://typecast.ai/developers/api/)
+- [Supertone TTS API](https://docs.supertoneapi.com/en/api-reference/endpoints/text-to-speech)
+- [Supertone API 요금](https://www.supertone.ai/en/api)
 - [MeloTTS Korean 모델과 라이선스](https://huggingface.co/myshell-ai/MeloTTS-Korean)
 - [ElevenLabs Forced Alignment](https://elevenlabs.io/docs/overview/capabilities/forced-alignment)
 - [ElevenLabs API 가격](https://elevenlabs.io/pricing/api)
@@ -609,6 +679,8 @@ AnalyticsProvider
 - [Remotion](https://www.remotion.dev/)
 - [FFmpeg 라이선스](https://ffmpeg.org/legal.html)
 - [Pixabay API](https://pixabay.com/api/docs/)
+- [Cloudinary 영상 연결](https://cloudinary.com/documentation/video_concatenation)
+- [Cloudinary 영상 레이어](https://cloudinary.com/documentation/video_layers)
 - [Unsplash API 지침](https://help.unsplash.com/en/articles/2511245-unsplash-api-guidelines)
 - [HeyGen Create Video API](https://developers.heygen.com/reference/create-video)
 - [AWS Step Functions ECS/Fargate 연동](https://docs.aws.amazon.com/step-functions/latest/dg/connect-ecs.html)

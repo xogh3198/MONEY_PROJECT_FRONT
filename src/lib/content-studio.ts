@@ -50,6 +50,7 @@ export interface ContentScene {
   narration: string;
   onScreenText: string;
   visualDirection: string;
+  visualSearchTerms: string[];
 }
 
 export interface ContentScriptDraft {
@@ -70,6 +71,27 @@ export interface ContentScriptDraft {
   aiDisclosure: string;
   factChecks: string[];
   sourceCredits: string[];
+}
+
+export type VideoRenderQuality = 'PREVIEW' | 'FINAL';
+export type VideoRenderStatus = 'QUEUED' | 'RENDERING' | 'COMPLETED' | 'FAILED';
+
+export interface VideoRenderJob {
+  id: string;
+  experimentId: string;
+  title: string;
+  quality: VideoRenderQuality;
+  status: VideoRenderStatus;
+  stage: string;
+  progress: number;
+  voiceProvider?: string;
+  durationSeconds?: number;
+  assetCredits?: string;
+  errorMessage?: string;
+  filePath?: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
 }
 
 const FINANCE_TERMS: Array<[string, number]> = [
