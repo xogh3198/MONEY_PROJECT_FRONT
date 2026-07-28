@@ -75,6 +75,96 @@ flowchart LR
 
 LLM은 원문 URL이나 HTML을 직접 명령으로 실행하지 않는다. 격리된 수집기가 필요한 정보만 추출하고, 사용자가 확인할 수 있는 사실 데이터로 정규화한 뒤 생성 모델에 전달한다.
 
+### 3.1 첫 영상 포맷 — `IMAGE_EXPLAINER_V1`
+
+첫 버전은 생성 영상이나 아바타 없이 관련 이미지 5~7장, 자체 숫자 카드·차트, AI 음성, 큰 자막만 사용한다. 한 편은 45~55초이며 장면은 2~10초마다 바뀐다.
+
+| 구간 | 길이 | 화면 | 음성 목적 |
+|---|---:|---|---|
+| 훅 | 0~3초 | 가장 강한 이미지, 질문형 문구, 핵심 숫자 | 답을 바로 다 말하지 않고 확인할 이유 제시 |
+| 상황 | 3~8초 | 사건·기업·시장 관련 이미지 | 무슨 일이 있었는지 한 문장으로 설명 |
+| 핵심 숫자 | 8~16초 | 자체 숫자 카드 또는 차트 | 변화 폭과 기준 시점을 명확히 설명 |
+| 이유 | 16~27초 | 원인과 맞는 이미지 1~2장 | 가장 가능성 높은 원인과 근거 설명 |
+| 내 영향 | 27~38초 | 생활·산업·시장 영향 이미지 | 시청자에게 왜 중요한지 연결 |
+| 다음 확인 | 38~47초 | 체크리스트 또는 캘린더 카드 | 앞으로 확인할 지표 하나 제시 |
+| CTA·고지 | 47~53초 | InvestBoard 상세 페이지와 출처 | 더 자세한 설명으로 연결하고 금융정보 고지 |
+
+화면 규격:
+
+- 9:16, 1080×1920, 30fps
+- 이미지에는 3~6%의 느린 확대·이동을 넣고 장면 전환은 120~250ms로 제한
+- 이미지 위에 어두운 그라데이션을 적용해 자막 대비를 유지
+- 자막은 화면 중앙보다 약간 아래에 최대 두 줄, 한 줄 9~16자
+- 플랫폼 버튼이 겹치는 오른쪽 140px, 하단 300px에는 핵심 텍스트를 배치하지 않음
+- 강조 단어는 한 구절에 하나만 색상 또는 크기로 표시
+- 출처와 고지는 마지막 장면과 상세 페이지에 남김
+
+“궁금하게 만드는 억양”은 과장된 문장보다 정보의 순서로 만든다.
+
+1. 첫 3초에 질문 또는 예상 밖의 숫자를 제시한다.
+2. 8초 안에 사건 자체는 설명한다.
+3. 원인과 영향 사이에 짧은 질문을 한 번 둔다.
+4. 38초 전에는 핵심 답을 제공한다.
+5. 제목에 없는 충격·폭락·무조건·지금 사야 한다 같은 표현은 생성 검증에서 거부한다.
+
+### 3.2 관련 이미지 선택
+
+Gemini는 장면마다 한국어·영어 검색어, 필요한 피사체, 금지 요소를 구조화해 반환한다. `AssetProvider`는 다음 순서로 자산을 결정한다.
+
+1. InvestBoard가 직접 만든 차트·숫자 카드
+2. 권리가 확인된 내부·고객 자산
+3. Pixabay 또는 Pexels의 관련 스톡 이미지·영상
+4. 검색 결과가 부정확하면 이미지 대신 자체 타이포그래피 카드
+
+Pixabay는 첫 스톡 공급자 후보로 둔다. 이미지·영상 검색, 세로 방향, 안전 검색, 인기순을 지원하며 결과와 함께 원본 페이지·작가·라이선스 확인 시각을 저장한다. API 검색 결과는 24시간 캐시하고 실제 렌더 자산은 서버에 내려받는다.
+
+관련성은 제목의 단어 일치만으로 결정하지 않는다. 장면의 피사체·산업·지역·분위기 일치, 해상도, 세로 크롭 가능성, 중복 여부를 점수화한다. 얼굴·로고·특정 기업·사건 현장처럼 오인 가능성이 높은 이미지는 자동 선택하지 않고 자체 카드로 대체한다.
+
+기사 원문의 썸네일과 본문 이미지는 별도 사용권이 확인되지 않으면 사용하지 않는다.
+
+### 3.3 억양과 자막 타이밍
+
+대본 생성 결과에 다음 전달 지시를 포함한다.
+
+```json
+{
+  "captionChunks": [
+    {
+      "text": "환율이 다시 움직였습니다.",
+      "delivery": "CURIOUS",
+      "rate": 1.03,
+      "emphasis": ["다시"],
+      "pauseAfterMs": 140
+    }
+  ]
+}
+```
+
+TTS 공급자가 스타일을 지원하면 `CURIOUS`, `SURPRISED`, `DETERMINED`, `CALM`을 해당 공급자의 SSML 또는 스타일로 변환한다. 지원하지 않으면 짧은 구절, 문장부호, 속도, 구절 사이 쉼으로 표현한다.
+
+자막은 첫 버전부터 음성에 맞춘다.
+
+1. 대본을 자막 구절 단위로 나눈다.
+2. 각 구절의 음성을 별도 파일로 생성한다.
+3. `ffprobe`로 실제 음성 길이를 측정한다.
+4. 지정된 쉼을 더해 누적 시작·종료 시각을 계산한다.
+5. SRT와 ASS 자막을 만들고 음성 파일을 순서대로 결합한다.
+
+이 방식은 공급자가 단어 타임스탬프를 주지 않아도 구절 단위 자막을 정확히 맞춘다. 공급자가 Polly speech marks나 Azure WordBoundary를 제공할 때만 단어별 강조 자막을 선택적으로 만든다.
+
+### 3.4 MP4 렌더와 미리보기
+
+FFmpeg worker는 다음 순서로 렌더한다.
+
+1. 이미지를 9:16에 맞게 크롭·확대하고 흐린 배경 또는 그라데이션을 생성
+2. 장면별 확대·이동, 숫자 카드, 로고, 출처를 합성
+3. 구절 음성과 쉼을 결합하고 전체 음량을 정규화
+4. ASS 자막을 입히고 장면을 연결
+5. H.264 영상과 AAC 음성의 MP4를 `faststart` 옵션으로 생성
+6. 해상도, 길이, 무음, 검은 프레임, 자막 안전 영역을 자동 검사
+
+콘텐츠 스튜디오의 첫 미리보기는 540×960, 낮은 비트레이트로 빠르게 만든다. 브라우저의 `<video controls>`에서 재생하고 장면별 대본·이미지·억양을 수정한다. 수정할 때 기존 파일을 덮어쓰지 않고 `VideoSpec` 버전을 올린다. 사용자가 승인하면 같은 spec으로 1080×1920 최종본을 생성하고 MP4를 다운로드하게 한다.
+
 ## 4. 핵심 데이터 계약
 
 ### 4.1 SourcePack
@@ -226,14 +316,20 @@ SOURCE_PENDING
 
 | 선택지 | 장점 | 단점·위험 | 현재 판단 |
 |---|---|---|---|
-| Gemini TTS | 기존 Gemini 키 활용 가능, 한국어, 말투·속도·톤 제어 | Preview 모델, 단어별 타임코드가 기본 계약에 없음 | InvestBoard 1차 음성 후보 |
-| Google Cloud TTS | 한국어 GA 음성, SSML `<mark>` 타임포인트, 다양한 안정 모델 | 별도 GCP 프로젝트·결제·자격증명 | 장면·구문 정렬이 중요할 때 강한 후보 |
-| Amazon Polly | 기존 AWS와 결합, 한국어, word/sentence speech marks | 한국어 음색 선택 폭과 자연스러움 비교 필요 | 안정적 fallback 후보 |
-| ElevenLabs | 자연스러운 다국어 음성, Forced Alignment로 단어별 시각 제공 | 별도 계정·비용·음성 권리 관리 | 프리미엄 음성·정밀 자막 후보 |
+| Azure Speech F0 | 한국어 남녀 음성, 일부 한국어 음성의 감정 스타일, WordBoundary, 월 50만 자 무료 | 별도 Azure 계정·리소스·키 필요 | 무료 품질·억양 비교 1순위 |
+| Amazon Polly | 기존 AWS와 결합, 한국어 `Seoyeon`·`Jihye`, word/sentence speech marks | 한국어 전용 감정 스타일이 제한적이고 프리 티어는 계정 조건 확인 필요 | 운영 연결 1순위 |
+| MeloTTS Korean | MIT, 한국어, CPU 실시간 추론, 외부 API 비용 없음 | 음성 품질·감정 표현·서버 자원과 모델 공급망을 직접 관리 | 완전 로컬 무료 fallback |
+| Google Cloud TTS | 한국어 음성, SSML `<mark>`, 월 100만~400만 자 무료 구간 | 결제 사용 설정과 별도 GCP 자격증명 필요 | 안정성 비교 후보 |
+| ElevenLabs | 표현력 높은 다국어 음성, 정밀 정렬 | 무료는 약 10~20분 수준이고 별도 계정·권리 관리 필요 | 유료 프리미엄 후보 |
+| Gemini TTS | 기존 Gemini 키 활용 가능, 한국어, 말투·속도·톤 제어 | Preview 모델, 단어별 타임코드가 기본 계약에 없음 | 기존 비교 기준 |
 
 Gemini TTS 60초 오디오는 공식 가격의 초당 25 오디오 토큰과 100만 출력 토큰당 $20을 적용하면 약 $0.03이다. 하루 5편, 월 150편이면 TTS 출력은 약 $4.50이다. 무료 구간과 재시도는 이 계산에서 제외한다.
 
-1차 자막은 장면별 길이로 맞춘다. 정밀한 단어 강조가 실제 완주율을 개선할 때만 Google SSML mark, Polly speech marks, ElevenLabs Forced Alignment 중 하나를 추가한다.
+하루 5편, 편당 대본 500자라면 월 약 7만 5천 자다. Amazon Polly Neural 음성과 speech marks를 각각 호출해 15만 자가 과금돼도 프리 티어 밖 비용은 공식 단가 기준 약 $2.40이다. Azure F0의 월 50만 자와 Google Cloud의 무료 한도 안에도 들어간다. 무료 한도 초과를 막기 위해 공급자별 월 문자 제한과 차단 임계값을 애플리케이션에 둔다.
+
+API 비용을 완전히 없애려면 MeloTTS Korean을 별도 worker에서 실행할 수 있다. 모델 카드상 MIT이며 상업·비상업 사용이 가능하지만, 실제 배포 전 코드·모델·의존 데이터의 라이선스를 다시 고정하고 음질을 사람 평가한다. XTTS-v2는 한국어를 지원해도 모델 라이선스가 비상업용이므로 수익화 제품에는 사용하지 않는다.
+
+추천 실험은 동일한 대본 10개를 Amazon Polly, Azure F0, MeloTTS로 생성해 자연스러움·집중도·발음 오류·생성시간·비용을 블라인드 평가하는 것이다. 새 Azure 계정 생성은 사용자 승인 후 진행한다.
 
 ### 6.3 이미지·영상 자산
 
@@ -271,9 +367,11 @@ HeyGen API는 아바타 또는 임의 이미지, 대본·음성, 자막, 9:16 �
 ### 7.1 첫 번째 기술 검증
 
 - 대본: 기존 `gemini-3.1-flash-lite`
-- 음성: Gemini TTS
-- 자막: 장면 단위
-- 장면: 자체 SVG/PNG 카드, 차트, 브랜드 요소
+- 음성 A: 기존 AWS 계정의 Amazon Polly Neural
+- 음성 B: 사용자 승인 후 Azure Speech F0
+- 음성 C: 로컬 MeloTTS Korean
+- 자막: 음성 구절 길이 기반, 가능한 공급자는 word boundary 추가
+- 장면: 관련 스톡 이미지 5~7장, 자체 SVG/PNG 카드와 차트
 - 렌더 A: 자체 FFmpeg worker
 - 렌더 B: 사용자 승인 후 Shotstack sandbox
 - 저장: 로컬 임시 저장 후 운영 단계에서는 S3
@@ -477,9 +575,9 @@ AnalyticsProvider
 
 사용자 승인 없이 진행하지 않는다.
 
-- Shotstack, Creatomate, JSON2Video, ElevenLabs, HeyGen 등 외부 계정 생성
+- Azure Speech, Pixabay, Pexels, Shotstack, Creatomate, JSON2Video, ElevenLabs, HeyGen 등 외부 계정 생성
 - 유료 API 또는 구독 시작
-- 새로운 AWS/GCP 유료 리소스
+- 새로운 AWS·Azure·GCP 유료 리소스
 - OAuth 범위와 게시 계정 연결
 - 외부 공개·예약·삭제
 - 생성 이미지·생성 영상의 유료 사용
@@ -492,9 +590,17 @@ AnalyticsProvider
 - [Gemini TTS](https://ai.google.dev/gemini-api/docs/speech-generation)
 - [Gemini API 가격](https://ai.google.dev/gemini-api/docs/pricing)
 - [Google Cloud TTS 한국어 음성](https://cloud.google.com/text-to-speech/docs/voices)
+- [Google Cloud TTS 가격과 무료 한도](https://cloud.google.com/text-to-speech/pricing?hl=ko)
 - [Google Cloud TTS SSML timepoints](https://docs.cloud.google.com/text-to-speech/docs/ssml)
+- [Azure Speech 가격과 F0 무료 한도](https://azure.microsoft.com/en-us/pricing/details/speech/)
+- [Azure Speech 한국어 음성과 스타일](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts)
+- [Azure Speech SSML·WordBoundary](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup-structure)
 - [Amazon Polly speech marks](https://docs.aws.amazon.com/polly/latest/dg/speechmarks.html)
+- [Amazon Polly 한국어 음성](https://docs.aws.amazon.com/polly/latest/dg/available-voices.html)
+- [Amazon Polly 가격과 무료 구간](https://aws.amazon.com/polly/pricing/)
+- [MeloTTS Korean 모델과 라이선스](https://huggingface.co/myshell-ai/MeloTTS-Korean)
 - [ElevenLabs Forced Alignment](https://elevenlabs.io/docs/overview/capabilities/forced-alignment)
+- [ElevenLabs API 가격](https://elevenlabs.io/pricing/api)
 - [Shotstack API](https://shotstack.io/docs/api/)
 - [Shotstack 가격](https://shotstack.io/pricing/)
 - [Creatomate template render API](https://creatomate.com/docs/api/quick-start/create-a-video-by-template)
