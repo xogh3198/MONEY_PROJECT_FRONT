@@ -2,6 +2,7 @@
 
 import { track } from '@vercel/analytics/react';
 import { useEffect, useRef } from 'react';
+import { trackGrowthEvent } from '@/lib/growth-analytics';
 
 export default function GrowthTracker({ contentType, contentId }: { contentType: string; contentId: string }) {
   const sent = useRef(false);
@@ -13,6 +14,7 @@ export default function GrowthTracker({ contentType, contentId }: { contentType:
       if (documentHeight <= 0 || window.scrollY / documentHeight >= 0.5) {
         sent.current = true;
         track('qualified_read_50', { content_type: contentType, content_id: contentId });
+        trackGrowthEvent('qualified_read_50', { content_type: contentType, content_id: contentId });
         window.removeEventListener('scroll', onScroll);
       }
     };

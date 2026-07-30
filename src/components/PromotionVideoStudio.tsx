@@ -8,9 +8,12 @@ import {
   VideoRenderJob,
   VideoRenderQuality,
 } from '@/lib/content-studio';
+import { trackGrowthEvent } from '@/lib/growth-analytics';
+import StudioOperationsPanel from '@/components/StudioOperationsPanel';
 
 const ACCESS_KEY_STORAGE = 'promotion_map_studio_key';
 const DRAFT_STORAGE = 'promotion_map_video_draft_v1';
+const VIDEO_HANDOFF_STORAGE = 'promotion_map_video_handoff_v1';
 
 const sourceTypes: Array<{ value: PromotionVideoInput['sourceType']; label: string }> = [
   { value: 'URL', label: '웹사이트·링크' },
@@ -47,6 +50,7 @@ export default function PromotionVideoStudio() {
   const [loading, setLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [error, setError] = useState('');
+  const [handoffLoaded, setHandoffLoaded] = useState(false);
 
   useEffect(() => {
     const savedKey = localStorage.getItem(ACCESS_KEY_STORAGE) || '';
@@ -60,6 +64,24 @@ export default function PromotionVideoStudio() {
         setDraft(JSON.parse(savedDraft) as ContentScriptDraft);
       } catch {
         localStorage.removeItem(DRAFT_STORAGE);
+      }
+    }
+    const handoff = sessionStorage.getItem(VIDEO_HANDOFF_STORAGE);
+    if (handoff) {
+      try {
+        const parsed = JSON.parse(handoff) as { input?: PromotionVideoInput };
+        if (parsed.input?.title && parsed.input.description) {
+          setInput(parsed.input);
+          setReferencesText(parsed.input.referenceLinks.join('\n'));
+          setFactsText(parsed.input.verifiedFacts.join('\n'));
+          setDraft(null);
+          localStorage.removeItem(DRAFT_STORAGE);
+          setHandoffLoaded(true);
+        }
+      } catch {
+        // 손상된 임시 전달값은 사용하지 않습니다.
+      } finally {
+        sessionStorage.removeItem(VIDEO_HANDOFF_STORAGE);
       }
     }
   }, []);
@@ -106,6 +128,10 @@ export default function PromotionVideoStudio() {
       if (!response.ok) throw new Error(data.error || '영상 초안을 만들지 못했습니다.');
       setDraft(data.draft);
       localStorage.setItem(DRAFT_STORAGE, JSON.stringify(data.draft));
+      trackGrowthEvent('promotion_video_draft_created', {
+        source_type: input.sourceType,
+        scene_count: data.draft?.scenes?.length || 0,
+      });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '영상 초안을 만들지 못했습니다.');
     } finally {
@@ -119,6 +145,10 @@ export default function PromotionVideoStudio() {
     setError('');
     setJob(null);
     setVideoUrl('');
+    trackGrowthEvent('promotion_video_render_requested', {
+      quality,
+      experiment_id: draft.experimentId,
+    });
 
     try {
       const submitResponse = await fetch('/api/content-studio/video', {
@@ -219,12 +249,20 @@ export default function PromotionVideoStudio() {
           </form>
         </section>
       ) : (
+        <>
+        <StudioOperationsPanel accessKey={accessKey} />
         <section className="studio-workspace">
           <form className="studio-input-card" onSubmit={createDraft}>
             <div className="studio-card-heading">
               <span>01</span>
               <div><p className="section-kicker">SOURCE BRIEF</p><h2>확인된 내용만 넣어주세요.</h2></div>
             </div>
+
+            {handoffLoaded && (
+              <p className="studio-handoff-note">
+                실행지도에서 대상·고객·목표·CTA를 가져왔습니다. 확인된 사실과 사용권이 있는 자산만 보완해 주세요.
+              </p>
+            )}
 
             <fieldset>
               <legend>홍보 대상</legend>
@@ -290,6 +328,7 @@ export default function PromotionVideoStudio() {
             )}
           </section>
         </section>
+        </>
       )}
     </main>
   );

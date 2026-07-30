@@ -3,6 +3,7 @@
 import { track } from '@vercel/analytics/react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { trackGrowthEvent } from '@/lib/growth-analytics';
 
 export default function TrackedLink({
   href,
@@ -27,7 +28,10 @@ export default function TrackedLink({
       target={target}
       rel={rel}
       className={className}
-      onClick={() => track(eventName, { destination: href, ...properties })}
+      onClick={() => {
+        track(eventName, { destination: href, ...properties });
+        trackGrowthEvent(eventName, { destination: href, ...properties });
+      }}
     >
       {children}
     </Link>

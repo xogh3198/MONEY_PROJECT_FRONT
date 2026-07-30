@@ -4,6 +4,7 @@ import '@/styles/investboard-hub.css';
 import type { Metadata } from 'next';
 import AppShell from '@/components/AppShell';
 import { Analytics } from '@vercel/analytics/react';
+import PageViewTracker from '@/components/analytics/PageViewTracker';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://investboard.cloud'),
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet" />
       </head>
       <body>
+        <PageViewTracker />
         <AppShell>{children}</AppShell>
         <Analytics />
       </body>

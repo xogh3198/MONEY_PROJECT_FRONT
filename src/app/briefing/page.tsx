@@ -6,6 +6,7 @@ import ShareButton from '@/components/ShareButton';
 import TrackedLink from '@/components/analytics/TrackedLink';
 import { CATEGORY_LABELS, NewsArticle } from '@/lib/news';
 import { rankNewsForBriefing } from '@/lib/news-ranking';
+import InterestTopicSelector from '@/components/InterestTopicSelector';
 
 const SITE_URL = 'https://investboard.cloud';
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8083';
@@ -122,6 +123,8 @@ export default async function BriefingPage() {
           <ShareButton title="오늘의 1분 머니 브리핑" path="/briefing" contentType="daily_briefing" />
         </div>
       </header>
+
+      <InterestTopicSelector availableTopics={topArticles.map(article => article.category)} />
 
       <section>
         <div className="mb-3 flex items-center justify-between">

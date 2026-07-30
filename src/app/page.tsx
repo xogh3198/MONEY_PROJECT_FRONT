@@ -132,7 +132,16 @@ export default function HomePage() {
 
       <footer className="hub-footer">
         <div><strong>InvestBoard</strong><p>근거 있는 정보와 통제 가능한 실행을 연결합니다.</p></div>
-        <p>금융 정보는 일반적인 교육·정보 목적이며 개인별 투자 자문이 아닙니다.</p>
+        <div className="hub-footer-links">
+          <nav aria-label="운영·정책">
+            <Link href="/briefing">오늘의 브리핑</Link>
+            <Link href="/guides">금융 가이드</Link>
+            <Link href="/about">서비스 소개</Link>
+            <Link href="/editorial-policy">편집 원칙</Link>
+            <Link href="/privacy">개인정보 안내</Link>
+          </nav>
+          <p>금융 정보는 일반적인 교육·정보 목적이며 개인별 투자 자문이 아닙니다.</p>
+        </div>
       </footer>
     </main>
   );

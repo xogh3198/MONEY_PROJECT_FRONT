@@ -4,6 +4,9 @@ const LINKS = [
   { href: '/', label: '통합 홈' },
   { href: '/forum', label: 'InvestingBoard' },
   { href: '/promotion-map', label: '마케팅맵' },
+  { href: '/about', label: '소개' },
+  { href: '/editorial-policy', label: '편집·AI 정책' },
+  { href: '/privacy', label: '개인정보' },
   { href: '/feed.xml', label: 'RSS' },
 ];
 

@@ -2,6 +2,7 @@
 
 import { track } from '@vercel/analytics/react';
 import { useState } from 'react';
+import { trackGrowthEvent } from '@/lib/growth-analytics';
 
 export default function ShareButton({
   title,
@@ -23,10 +24,12 @@ export default function ShareButton({
       if (navigator.share) {
         await navigator.share({ title, url: url.toString() });
         track('content_share', { content_type: contentType, method: 'native' });
+        trackGrowthEvent('content_share', { content_type: contentType, method: 'native' });
       } else {
         await navigator.clipboard.writeText(url.toString());
         setCopied(true);
         track('content_share', { content_type: contentType, method: 'clipboard' });
+        trackGrowthEvent('content_share', { content_type: contentType, method: 'clipboard' });
         window.setTimeout(() => setCopied(false), 1800);
       }
     } catch {

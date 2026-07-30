@@ -10,6 +10,10 @@ import {
   PromotionSourceType,
   WebsiteAnalysis
 } from "@/lib/promotion-map";
+import type { PromotionVideoInput } from "@/lib/content-studio";
+import { trackGrowthEvent } from "@/lib/growth-analytics";
+
+const VIDEO_HANDOFF_STORAGE = "promotion_map_video_handoff_v1";
 
 const goals = [
   { value: "상담 문의", label: "상담 문의" },
@@ -62,6 +66,7 @@ export default function PromotionPlanner() {
   const [targetRegion, setTargetRegion] = useState("전국");
   const [monthlyBudget, setMonthlyBudget] = useState(300000);
   const [capabilities, setCapabilities] = useState<string[]>(["글 작성"]);
+  const [pricingInterest, setPricingInterest] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -91,6 +96,10 @@ export default function PromotionPlanner() {
       setTargetAudience(nextAnalysis.targetAudienceHypotheses[0] ?? "사이트의 핵심 고객");
       setTargetRegion(nextAnalysis.serviceRegions[0] ?? "전국");
       setStage("brief");
+      trackGrowthEvent("promotion_source_analyzed", {
+        source_type: sourceType,
+        has_url: Boolean(url.trim()),
+      });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "분석 요청에 실패했습니다.");
     } finally {
@@ -118,6 +127,11 @@ export default function PromotionPlanner() {
       const nextPlan = await createPromotionPlan(brief);
       setPlan(nextPlan);
       setStage("result");
+      trackGrowthEvent("promotion_plan_created", {
+        source_type: sourceType,
+        goal,
+        budget_band: budgetBand(monthlyBudget),
+      });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "계획 생성에 실패했습니다.");
     } finally {
@@ -138,6 +152,50 @@ export default function PromotionPlanner() {
     setAnalysis(null);
     setPlan(null);
     setError("");
+  }
+
+  function openVideoStudio() {
+    if (!analysis || !plan) return;
+    const references = [
+      url.trim(),
+      analysis.canonicalUrl,
+      ...referenceLinks.split(/\r?\n/).map(item => item.trim()),
+    ].filter((value, index, values) => Boolean(value) && values.indexOf(value) === index);
+    const facts = analysis.evidence.map(item => `${item.label}: ${item.value}`);
+    const input: PromotionVideoInput = {
+      sourceType,
+      title: sourceTitle.trim() || analysis.title,
+      description: [
+        description.trim() || analysis.sourceSummary,
+        `홍보 계획: ${plan.strategySummary}`,
+      ].filter(Boolean).join('\n\n'),
+      sourceUrl: url.trim() || analysis.canonicalUrl || undefined,
+      referenceLinks: references,
+      targetAudience,
+      goal,
+      callToAction: analysis.primaryCtas[0] || goalCallToAction(goal),
+      verifiedFacts: facts,
+      ownedAssetNotes: '',
+    };
+    sessionStorage.setItem(VIDEO_HANDOFF_STORAGE, JSON.stringify({
+      input,
+      planId: plan.planId,
+    }));
+    trackGrowthEvent("promotion_plan_to_studio", {
+      source_type: sourceType,
+      goal,
+      plan_id: plan.planId,
+    });
+    window.location.href = "/promotion-map/studio?utm_source=marketing-map-plan&utm_medium=internal&utm_campaign=marketing-map-video";
+  }
+
+  function recordPricingInterest(option: string) {
+    setPricingInterest(option);
+    trackGrowthEvent("promotion_pricing_interest", {
+      option,
+      source_type: sourceType,
+      goal,
+    });
   }
 
   const activeStageIndex = stageItems.findIndex((item) => item.id === stage);
@@ -687,9 +745,51 @@ export default function PromotionPlanner() {
                   미리보기 MP4를 렌더합니다. 자동 업로드와 광고 집행은 하지 않습니다.
                 </p>
               </div>
-              <a href="/promotion-map/studio?utm_source=marketing-map-plan&utm_medium=internal&utm_campaign=marketing-map-video">
+              <button type="button" onClick={openVideoStudio}>
                 홍보 영상 초안 만들기 ↗
-              </a>
+              </button>
+            </aside>
+
+            <aside className="pricing-experiment" aria-labelledby="pricing-experiment-title">
+              <div>
+                <span>EARLY ACCESS · 결제 없음</span>
+                <h3 id="pricing-experiment-title">어떤 결과물이라면 비용을 낼 가치가 있나요?</h3>
+                <p>
+                  결제나 신청은 진행하지 않습니다. 가장 필요한 수준을 선택하면 정식 서비스의
+                  기능과 가격을 결정하는 익명 수요 신호로만 사용합니다.
+                </p>
+              </div>
+              <div className="pricing-options">
+                <button
+                  className={pricingInterest === "draft_9900" ? "is-selected" : ""}
+                  type="button"
+                  onClick={() => recordPricingInterest("draft_9900")}
+                >
+                  <strong>₩9,900</strong>
+                  <span>대본·장면 초안</span>
+                </button>
+                <button
+                  className={pricingInterest === "video_29900" ? "is-selected" : ""}
+                  type="button"
+                  onClick={() => recordPricingInterest("video_29900")}
+                >
+                  <strong>₩29,900</strong>
+                  <span>검수 가능한 MP4</span>
+                </button>
+                <button
+                  className={pricingInterest === "monthly_49000" ? "is-selected" : ""}
+                  type="button"
+                  onClick={() => recordPricingInterest("monthly_49000")}
+                >
+                  <strong>월 ₩49,000</strong>
+                  <span>월 4개 영상</span>
+                </button>
+              </div>
+              {pricingInterest && (
+                <p className="pricing-thanks" role="status">
+                  선택을 기록했습니다. 실제 결제나 연락처 수집은 발생하지 않습니다.
+                </p>
+              )}
             </aside>
 
             <aside className="assumption-box">
@@ -746,4 +846,19 @@ export default function PromotionPlanner() {
       </footer>
     </main>
   );
+}
+
+function goalCallToAction(goal: string): string {
+  if (goal === "상담 문의") return "대표 페이지에서 상담 방법 확인하기";
+  if (goal === "방문") return "위치와 방문 정보를 확인하기";
+  if (goal === "가입") return "가입 전에 제공 기능 확인하기";
+  if (goal === "구매") return "상품 구성과 조건 확인하기";
+  return "대표 페이지에서 더 자세히 알아보기";
+}
+
+function budgetBand(monthlyBudget: number): string {
+  if (monthlyBudget === 0) return "0";
+  if (monthlyBudget <= 300_000) return "1-300000";
+  if (monthlyBudget <= 1_000_000) return "300001-1000000";
+  return "1000001+";
 }

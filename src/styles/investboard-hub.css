@@ -559,6 +559,22 @@
   line-height: 1.6;
 }
 
+.hub-footer-links {
+  text-align: right;
+}
+
+.hub-footer-links nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+
+.hub-footer-links a {
+  color: var(--hub-text);
+  font-weight: 750;
+}
+
 @media (max-width: 900px) {
   .hub-status {
     display: none;
@@ -590,6 +606,19 @@
   .hub-route-guide,
   .hub-footer {
     width: min(100% - 24px, 1180px);
+  }
+
+  .hub-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hub-footer-links {
+    text-align: left;
+  }
+
+  .hub-footer-links nav {
+    justify-content: flex-start;
   }
 
   .hub-header {

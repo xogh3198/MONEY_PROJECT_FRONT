@@ -6,9 +6,11 @@ import Navigation from '@/components/Navigation';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const usesInvestBoardShell = pathname === '/login' || pathname.startsWith('/forum');
+  const usesCustomShell = pathname === '/'
+    || pathname.startsWith('/promotion-map')
+    || pathname.startsWith('/content-studio');
 
-  if (!usesInvestBoardShell) {
+  if (usesCustomShell) {
     return <>{children}</>;
   }
 

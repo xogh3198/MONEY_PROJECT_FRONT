@@ -84,6 +84,21 @@ export default async function GuidePage({ params }: { params: PageParams }) {
         ))}
       </div>
 
+      {guide.sources && guide.sources.length > 0 && (
+        <section className="mb-8 rounded-xl border border-border bg-card p-5">
+          <h2 className="text-sm font-bold">공식 참고자료</h2>
+          <ul className="mt-3 space-y-2 text-xs leading-6 text-text-secondary">
+            {guide.sources.map(source => (
+              <li key={source.url}>
+                <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">
+                  {source.label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <aside className="rounded-xl border border-accent/25 bg-accent/5 p-5">
         <h2 className="font-bold">읽은 내용을 실제 데이터로 확인해보세요</h2>
         <p className="mt-2 text-sm text-text-secondary">계산 결과는 가정을 확인하는 도구이며 미래 수익을 보장하지 않습니다.</p>

@@ -4,6 +4,7 @@ import { fetchIndicators } from '@/lib/api';
 import Link from 'next/link';
 import { track } from '@vercel/analytics/react';
 import GrowthTracker from '@/components/analytics/GrowthTracker';
+import { trackGrowthEvent } from '@/lib/growth-analytics';
 
 export default function ToolsPage() {
   return (
@@ -67,7 +68,10 @@ function CurrencyCalculator() {
           type="number"
           value={amount}
           onChange={e => setAmount(e.target.value)}
-          onBlur={() => track('tool_complete', { tool: 'currency' })}
+          onBlur={() => {
+            track('tool_complete', { tool: 'currency' });
+            trackGrowthEvent('tool_complete', { tool: 'currency' });
+          }}
           placeholder={direction === 'usd-to-krw' ? '달러 금액' : '원화 금액'}
           className="w-full px-4 py-3 bg-bg border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
         />
@@ -124,6 +128,7 @@ function DividendTaxCalculator() {
             <button key={opt.value} onClick={() => {
               setAccountType(opt.value as 'general' | 'isa' | 'irp');
               track('tool_option', { tool: 'dividend_tax', account_type: opt.value });
+              trackGrowthEvent('tool_option', { tool: 'dividend_tax', account_type: opt.value });
             }}
               className={`flex-1 py-2 rounded text-xs font-medium transition ${accountType === opt.value ? 'bg-accent text-black' : 'bg-border/50 text-text-secondary'}`}>
               {opt.label}
@@ -135,7 +140,10 @@ function DividendTaxCalculator() {
           type="number"
           value={preTax}
           onChange={e => setPreTax(e.target.value)}
-          onBlur={() => track('tool_complete', { tool: 'dividend_tax' })}
+          onBlur={() => {
+            track('tool_complete', { tool: 'dividend_tax' });
+            trackGrowthEvent('tool_complete', { tool: 'dividend_tax' });
+          }}
           placeholder="세전 배당금 (원)"
           className="w-full px-4 py-3 bg-bg border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
         />
