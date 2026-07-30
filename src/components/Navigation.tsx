@@ -4,11 +4,17 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
-  { href: '/forum', label: '뉴스', icon: '📰' },
-  { href: '/forum/community', label: '커뮤니티', icon: '💬' },
+  { href: '/', activePath: '/', label: '홈', icon: '⌂' },
   {
-    href: '/cases/investboard?utm_source=investboard&utm_medium=internal&utm_campaign=product-bridge',
-    label: '만든 방식',
+    href: '/forum?utm_source=investingboard-nav&utm_medium=internal&utm_campaign=product-navigation',
+    activePath: '/forum',
+    label: 'InvestingBoard',
+    icon: '▤',
+  },
+  {
+    href: '/promotion-map?utm_source=investingboard-nav&utm_medium=internal&utm_campaign=product-navigation',
+    activePath: '/promotion-map',
+    label: '마케팅맵',
     icon: '↗',
   },
 ];
@@ -44,13 +50,13 @@ export default function Navigation() {
       {/* 데스크톱 상단 네비 */}
       <header className="bg-card border-b border-border sticky top-0 z-50 hidden md:block">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-12">
-          <Link href="/forum" className="text-lg font-bold text-accent">InvestBoard</Link>
+          <Link href="/" className="text-lg font-bold text-accent">InvestBoard</Link>
 
           <nav className="flex items-center gap-1">
             {NAV_ITEMS.map(item => (
               <Link key={item.href} href={item.href}
                 className={`px-3 py-1.5 rounded text-sm transition ${
-                  isActive(pathname, item.href) ? 'text-accent bg-accent/10' : 'text-text-secondary hover:text-text-primary'
+                  isActive(pathname, item.activePath ?? item.href) ? 'text-accent bg-accent/10' : 'text-text-secondary hover:text-text-primary'
                 }`}>
                 {item.label}
               </Link>
@@ -77,7 +83,7 @@ export default function Navigation() {
       {/* 모바일 상단 헤더 (간소화) */}
       <header className="bg-card border-b border-border sticky top-0 z-50 md:hidden">
         <div className="px-4 flex items-center justify-between h-11">
-          <Link href="/forum" className="text-base font-bold text-accent">InvestBoard</Link>
+          <Link href="/" className="text-base font-bold text-accent">InvestBoard</Link>
           {!mounted ? null : user ? (
             <button onClick={logout} className="text-xs text-text-secondary">로그아웃</button>
           ) : (
@@ -92,7 +98,7 @@ export default function Navigation() {
           {MOBILE_NAV_ITEMS.map(item => (
             <Link key={item.href} href={item.href}
               className={`flex flex-col items-center py-1 px-2 ${
-                isActive(pathname, item.href) ? 'text-accent' : 'text-text-secondary'
+                isActive(pathname, item.activePath ?? item.href) ? 'text-accent' : 'text-text-secondary'
               }`}>
               <span className="text-lg">{item.icon}</span>
               <span className="text-[10px] mt-0.5">{item.label}</span>

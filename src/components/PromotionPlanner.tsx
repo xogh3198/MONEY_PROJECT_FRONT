@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   createPromotionPlan,
   createWebsiteAnalysis,
@@ -144,26 +145,27 @@ export default function PromotionPlanner() {
   return (
     <main className="promotion-root site-page">
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="홍보지도 홈">
+        <a className="brand" href="/promotion-map" aria-label="마케팅맵 홈">
           <span className="brand-mark" aria-hidden="true">
             P
           </span>
           <span className="brand-copy">
-            <strong>홍보지도</strong>
-            <small>PROMOTION MAP</small>
+            <strong>마케팅맵</strong>
+            <small>MARKETING MAP</small>
           </span>
         </a>
-        <nav aria-label="주요 메뉴">
-          <a href="#planner">계획 만들기</a>
-          <a href="/cases/investboard?utm_source=promotion-map-nav&utm_medium=internal&utm_campaign=product-bridge">
-            운영 사례
+        <nav className="product-nav" aria-label="제품 메뉴">
+          <Link href="/">홈</Link>
+          <a href="/forum?utm_source=marketing-map-nav&utm_medium=internal&utm_campaign=product-navigation">
+            InvestingBoard
           </a>
-          <a href="#how">작동 방식</a>
+          <a href="/promotion-map?utm_source=marketing-map-nav&utm_medium=internal&utm_campaign=product-navigation">
+            마케팅맵
+          </a>
         </nav>
-        <span className="pilot-badge">
-          <i aria-hidden="true" />
-          LOCAL PILOT
-        </span>
+        <a className="product-top-cta" href="/promotion-map/studio?utm_source=marketing-map-nav&utm_medium=internal&utm_campaign=marketing-map-video">
+          영상 만들기 ↗
+        </a>
       </header>
 
       <section className="hero" id="top">
@@ -186,18 +188,11 @@ export default function PromotionPlanner() {
               무료로 실행지도 만들기
               <span aria-hidden="true">↗</span>
             </a>
-            <a
-              className="hero-secondary"
-              href="/forum?utm_source=promotion-map-hero&utm_medium=internal&utm_campaign=product-bridge"
-            >
-              금융 뉴스·토론 보기
-              <span aria-hidden="true">→</span>
-            </a>
           </div>
           <p className="hero-note">
-            사업 홍보가 필요하면 여기서 시작하세요. 금융 정보를 찾으셨다면 InvestingBoard로 바로 이동합니다.
+            계획과 초안은 무료로 확인 · 게시와 광고 집행은 사용자가 직접 결정
           </p>
-          <ul className="hero-points" aria-label="홍보지도 핵심 결과">
+          <ul className="hero-points" aria-label="마케팅맵 핵심 결과">
             <li>
               <strong>5+</strong>
               우선 채널
@@ -255,38 +250,6 @@ export default function PromotionPlanner() {
             <span>추천 근거 포함</span>
             <span>검토 후 직접 실행</span>
           </div>
-        </div>
-      </section>
-
-      <section className="purpose-gateway" aria-labelledby="purpose-title">
-        <div className="purpose-copy">
-          <p className="section-kicker">CHOOSE YOUR PATH</p>
-          <h2 id="purpose-title">같은 기술, 다른 방문 목적.</h2>
-          <p>
-            홍보지도는 사업자의 실행 계획을 만들고, InvestingBoard는 금융 뉴스와 토론을 제공합니다.
-            두 제품이 연결된 이유는 별도 사례 페이지에서 투명하게 설명합니다.
-          </p>
-        </div>
-        <div className="purpose-options">
-          <a className="purpose-option is-primary" href="#planner">
-            <small>홍보가 필요해요</small>
-            <strong>내 사업의 실행지도 만들기</strong>
-            <span>무료로 시작 →</span>
-          </a>
-          <a
-            className="purpose-option"
-            href="/forum?utm_source=promotion-map-gateway&utm_medium=internal&utm_campaign=product-bridge"
-          >
-            <small>금융 정보를 보러 왔어요</small>
-            <strong>InvestingBoard 뉴스·토론</strong>
-            <span>포럼으로 이동 →</span>
-          </a>
-          <a
-            className="purpose-context"
-            href="/cases/investboard?utm_source=promotion-map-gateway&utm_medium=internal&utm_campaign=product-bridge"
-          >
-            왜 함께 있나요? <b>실제 운영 사례 보기 ↗</b>
-          </a>
         </div>
       </section>
 
@@ -724,7 +687,9 @@ export default function PromotionPlanner() {
                   미리보기 MP4를 렌더합니다. 자동 업로드와 광고 집행은 하지 않습니다.
                 </p>
               </div>
-              <a href="/content-studio">홍보 영상 초안 만들기 ↗</a>
+              <a href="/promotion-map/studio?utm_source=marketing-map-plan&utm_medium=internal&utm_campaign=marketing-map-video">
+                홍보 영상 초안 만들기 ↗
+              </a>
             </aside>
 
             <aside className="assumption-box">
@@ -771,7 +736,7 @@ export default function PromotionPlanner() {
 
       <footer>
         <div>
-          <strong>홍보지도 <span>↗</span></strong>
+          <strong>마케팅맵 <span>↗</span></strong>
           <p>작은 사업의 첫 마케팅 결정을 더 투명하게.</p>
         </div>
         <div className="footer-status">

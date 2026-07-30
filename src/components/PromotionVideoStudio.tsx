@@ -1,0 +1,356 @@
+'use client';
+
+import Link from 'next/link';
+import { FormEvent, useEffect, useState } from 'react';
+import {
+  ContentScriptDraft,
+  PromotionVideoInput,
+  VideoRenderJob,
+  VideoRenderQuality,
+} from '@/lib/content-studio';
+
+const ACCESS_KEY_STORAGE = 'promotion_map_studio_key';
+const DRAFT_STORAGE = 'promotion_map_video_draft_v1';
+
+const sourceTypes: Array<{ value: PromotionVideoInput['sourceType']; label: string }> = [
+  { value: 'URL', label: '웹사이트·링크' },
+  { value: 'TEXT', label: '소개글·아이디어' },
+  { value: 'PRODUCT', label: '상품·서비스' },
+  { value: 'PLACE', label: '매장·장소' },
+  { value: 'APP', label: '앱' },
+  { value: 'CONTENT', label: '기존 콘텐츠' },
+];
+
+const initialInput: PromotionVideoInput = {
+  sourceType: 'URL',
+  title: '',
+  description: '',
+  sourceUrl: '',
+  referenceLinks: [],
+  targetAudience: '',
+  goal: '관심을 얻고 상세 페이지 방문',
+  callToAction: '대표 페이지에서 자세히 알아보기',
+  verifiedFacts: [],
+  ownedAssetNotes: '',
+};
+
+export default function PromotionVideoStudio() {
+  const [accessKey, setAccessKey] = useState('');
+  const [keyInput, setKeyInput] = useState('');
+  const [input, setInput] = useState(initialInput);
+  const [referencesText, setReferencesText] = useState('');
+  const [factsText, setFactsText] = useState('');
+  const [draft, setDraft] = useState<ContentScriptDraft | null>(null);
+  const [approved, setApproved] = useState(false);
+  const [job, setJob] = useState<VideoRenderJob | null>(null);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const savedKey = localStorage.getItem(ACCESS_KEY_STORAGE) || '';
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE);
+    if (savedKey) {
+      setAccessKey(savedKey);
+      setKeyInput(savedKey);
+    }
+    if (savedDraft) {
+      try {
+        setDraft(JSON.parse(savedDraft) as ContentScriptDraft);
+      } catch {
+        localStorage.removeItem(DRAFT_STORAGE);
+      }
+    }
+  }, []);
+
+  useEffect(() => () => {
+    if (videoUrl) URL.revokeObjectURL(videoUrl);
+  }, [videoUrl]);
+
+  const authenticate = (event: FormEvent) => {
+    event.preventDefault();
+    const key = keyInput.trim();
+    if (!key) return;
+    localStorage.setItem(ACCESS_KEY_STORAGE, key);
+    setAccessKey(key);
+  };
+
+  const updateInput = <K extends keyof PromotionVideoInput>(key: K, value: PromotionVideoInput[K]) => {
+    setInput(current => ({ ...current, [key]: value }));
+  };
+
+  const createDraft = async (event: FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    setApproved(false);
+    setJob(null);
+    setVideoUrl('');
+
+    try {
+      const payload: PromotionVideoInput = {
+        ...input,
+        referenceLinks: lines(referencesText),
+        verifiedFacts: lines(factsText),
+      };
+      const response = await fetch('/api/content-studio/promotion-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-content-studio-key': accessKey,
+        },
+        body: JSON.stringify({ input: payload }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '영상 초안을 만들지 못했습니다.');
+      setDraft(data.draft);
+      localStorage.setItem(DRAFT_STORAGE, JSON.stringify(data.draft));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '영상 초안을 만들지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderVideo = async (quality: VideoRenderQuality) => {
+    if (!draft || !approved) return;
+    setVideoLoading(true);
+    setError('');
+    setJob(null);
+    setVideoUrl('');
+
+    try {
+      const submitResponse = await fetch('/api/content-studio/video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-content-studio-key': accessKey,
+        },
+        body: JSON.stringify({ draft, quality }),
+      });
+      const submitted = await submitResponse.json();
+      if (!submitResponse.ok) throw new Error(submitted.error || '영상 렌더를 시작하지 못했습니다.');
+
+      let current = submitted as VideoRenderJob;
+      setJob(current);
+      const deadline = Date.now() + 20 * 60 * 1_000;
+
+      while (current.status === 'QUEUED' || current.status === 'RENDERING') {
+        if (Date.now() > deadline) throw new Error('영상 렌더가 20분 안에 끝나지 않았습니다.');
+        await new Promise(resolve => window.setTimeout(resolve, 3_000));
+        const statusResponse = await fetch(`/api/content-studio/video/${current.id}`, {
+          cache: 'no-store',
+          headers: { 'x-content-studio-key': accessKey },
+        });
+        const statusData = await statusResponse.json();
+        if (!statusResponse.ok) throw new Error(statusData.error || '영상 상태를 확인하지 못했습니다.');
+        current = statusData as VideoRenderJob;
+        setJob(current);
+      }
+
+      if (current.status === 'FAILED') throw new Error(current.errorMessage || '영상 렌더에 실패했습니다.');
+      const fileResponse = await fetch(`/api/content-studio/video/${current.id}/file`, {
+        cache: 'no-store',
+        headers: { 'x-content-studio-key': accessKey },
+      });
+      if (!fileResponse.ok) {
+        const detail = await fileResponse.json().catch(() => ({}));
+        throw new Error(detail.error || '영상 파일을 불러오지 못했습니다.');
+      }
+      setVideoUrl(URL.createObjectURL(await fileResponse.blob()));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '영상 렌더에 실패했습니다.');
+    } finally {
+      setVideoLoading(false);
+    }
+  };
+
+  return (
+    <main className="promotion-root studio-page">
+      <header className="topbar">
+        <Link className="brand" href="/promotion-map">
+          <span className="brand-mark">P</span>
+          <span className="brand-copy"><strong>마케팅맵</strong><small>MARKETING MAP</small></span>
+        </Link>
+        <nav className="product-nav" aria-label="제품 메뉴">
+          <Link href="/">홈</Link>
+          <Link href="/forum?utm_source=marketing-map-studio-nav&utm_medium=internal&utm_campaign=product-navigation">
+            InvestingBoard
+          </Link>
+          <Link href="/promotion-map?utm_source=marketing-map-studio-nav&utm_medium=internal&utm_campaign=product-navigation">
+            마케팅맵
+          </Link>
+        </nav>
+        <span className="pilot-badge"><i /> HUMAN REVIEW</span>
+      </header>
+
+      <section className="studio-hero">
+        <p className="section-kicker">MARKETING MAP · VIDEO STUDIO</p>
+        <h1>홍보할 내용을 넣으면,<br /><em>말하고 보여줄 순서</em>를 만듭니다.</h1>
+        <p>
+          마케팅맵에서 정리한 홍보 대상과 목표를 30~45초 대본·큰 자막·7개 장면으로 바꿉니다.
+          소개글, 상품, 매장, 앱, 기존 콘텐츠와 사용권이 있는 사진으로도 시작할 수 있습니다.
+        </p>
+        <div className="studio-flow" aria-label="영상 제작 흐름">
+          <span><b>01</b> 근거 입력</span><i>→</i>
+          <span><b>02</b> AI 초안</span><i>→</i>
+          <span><b>03</b> 사람 검수</span><i>→</i>
+          <span><b>04</b> MP4 미리보기</span>
+        </div>
+      </section>
+
+      {!accessKey ? (
+        <section className="studio-login">
+          <div>
+            <p className="section-kicker">PRIVATE PILOT</p>
+            <h2>내부 검수 키로 스튜디오를 엽니다.</h2>
+            <p>대본과 렌더 기능은 비용과 오남용을 막기 위해 공개하지 않습니다.</p>
+          </div>
+          <form onSubmit={authenticate}>
+            <input
+              type="password"
+              value={keyInput}
+              onChange={event => setKeyInput(event.target.value)}
+              placeholder="CONTENT_STUDIO_ACCESS_KEY"
+              autoComplete="current-password"
+            />
+            <button type="submit">스튜디오 열기</button>
+          </form>
+        </section>
+      ) : (
+        <section className="studio-workspace">
+          <form className="studio-input-card" onSubmit={createDraft}>
+            <div className="studio-card-heading">
+              <span>01</span>
+              <div><p className="section-kicker">SOURCE BRIEF</p><h2>확인된 내용만 넣어주세요.</h2></div>
+            </div>
+
+            <fieldset>
+              <legend>홍보 대상</legend>
+              <div className="studio-type-grid">
+                {sourceTypes.map(item => (
+                  <label className={input.sourceType === item.value ? 'active' : ''} key={item.value}>
+                    <input
+                      type="radio"
+                      value={item.value}
+                      checked={input.sourceType === item.value}
+                      onChange={() => updateInput('sourceType', item.value)}
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <label>이름<input required maxLength={160} value={input.title} onChange={event => updateInput('title', event.target.value)} placeholder="예: 동네 로스터리의 원두 정기구독" /></label>
+            <label>대표 URL (선택)<input type="url" value={input.sourceUrl || ''} onChange={event => updateInput('sourceUrl', event.target.value)} placeholder="https://example.com" /></label>
+            <label>누구의 어떤 문제를 어떻게 해결하나요?
+              <textarea required rows={6} value={input.description} onChange={event => updateInput('description', event.target.value)} placeholder="기능 목록보다 고객 상황, 해결 방식, 차별점을 구체적으로 적어주세요." />
+            </label>
+            <div className="studio-field-pair">
+              <label>핵심 고객<input required value={input.targetAudience} onChange={event => updateInput('targetAudience', event.target.value)} placeholder="예: 원두 선택이 어려운 1인 가구" /></label>
+              <label>영상 목표<input required value={input.goal} onChange={event => updateInput('goal', event.target.value)} /></label>
+            </div>
+            <label>마지막 행동 요청<input required value={input.callToAction} onChange={event => updateInput('callToAction', event.target.value)} placeholder="예: 샘플 구성 확인하기" /></label>
+            <label>확인 가능한 사실 (선택, 한 줄에 하나)
+              <textarea rows={4} value={factsText} onChange={event => setFactsText(event.target.value)} placeholder={"예: 서울 성수동에서 직접 로스팅\n예: 주문 후 로스팅 날짜 표기"} />
+            </label>
+            <label>참고 링크 (선택, 한 줄에 하나)
+              <textarea rows={3} value={referencesText} onChange={event => setReferencesText(event.target.value)} placeholder={"공식 상세 페이지, 플레이스, 앱스토어 등 최대 5개"} />
+            </label>
+            <label>사용권이 있는 사진·화면
+              <textarea rows={3} value={input.ownedAssetNotes} onChange={event => updateInput('ownedAssetNotes', event.target.value)} placeholder="예: 제품 정면 사진 3장, 포장 영상 1개, 앱 화면 캡처 4장" />
+            </label>
+
+            <button className="studio-generate" disabled={loading} type="submit">
+              {loading ? '대본과 장면을 만드는 중…' : '홍보 영상 초안 만들기 ↗'}
+            </button>
+            <p className="studio-small-note">외부 페이지 본문이나 이미지를 임의로 복사하지 않습니다. 자동 게시·광고 집행도 하지 않습니다.</p>
+          </form>
+
+          <section className="studio-draft-card">
+            <div className="studio-card-heading">
+              <span>02</span>
+              <div><p className="section-kicker">SCRIPT & SCENES</p><h2>검수할 영상 설계</h2></div>
+            </div>
+            {error && <p className="studio-error" role="alert">{error}</p>}
+            {!draft && !loading && <div className="studio-empty">왼쪽 정보를 입력하면 대본, 자막, 장면 구성이 여기에 표시됩니다.</div>}
+            {loading && <div className="studio-empty">사람이 읽었을 때 어색하지 않은 흐름으로 정리하고 있습니다…</div>}
+            {draft && !loading && (
+              <DraftResult
+                draft={draft}
+                approved={approved}
+                job={job}
+                videoUrl={videoUrl}
+                videoLoading={videoLoading}
+                onApprove={setApproved}
+                onRender={renderVideo}
+              />
+            )}
+          </section>
+        </section>
+      )}
+    </main>
+  );
+}
+
+function DraftResult({
+  draft,
+  approved,
+  job,
+  videoUrl,
+  videoLoading,
+  onApprove,
+  onRender,
+}: {
+  draft: ContentScriptDraft;
+  approved: boolean;
+  job: VideoRenderJob | null;
+  videoUrl: string;
+  videoLoading: boolean;
+  onApprove: (approved: boolean) => void;
+  onRender: (quality: VideoRenderQuality) => void;
+}) {
+  return (
+    <div className="studio-result">
+      <div className="studio-hook">
+        <small>{draft.durationSeconds}초 · {draft.targetAudience}</small>
+        <h3>{draft.title}</h3>
+        <p>{draft.hook}</p>
+      </div>
+      <div className="studio-scenes">
+        {draft.scenes.map(scene => (
+          <article key={`${scene.order}-${scene.onScreenText}`}>
+            <span>SCENE {String(scene.order).padStart(2, '0')} · {scene.seconds}s</span>
+            <h4>{scene.onScreenText}</h4>
+            <p>{scene.narration}</p>
+            <small>화면: {scene.visualDirection}</small>
+          </article>
+        ))}
+      </div>
+      <div className="studio-review">
+        <h3>게시 전 확인</h3>
+        <ul>{draft.factChecks.map(item => <li key={item}>{item}</li>)}</ul>
+        <p><b>출처</b> {draft.sourceCredits.join(' · ')}</p>
+        <p><b>고지</b> {draft.disclaimer} {draft.aiDisclosure}</p>
+        <label>
+          <input type="checkbox" checked={approved} onChange={event => onApprove(event.target.checked)} />
+          사실, 표현, 이미지 사용권을 확인했고 미리보기 렌더를 승인합니다.
+        </label>
+      </div>
+      <div className="studio-render">
+        <button type="button" disabled={!approved || videoLoading} onClick={() => onRender('PREVIEW')}>
+          {videoLoading ? '음성·자막 MP4 렌더 중…' : '저해상도 미리보기 만들기'}
+        </button>
+        <button type="button" disabled={!approved || videoLoading} onClick={() => onRender('FINAL')}>최종본 렌더</button>
+        {job && <p>{job.stage} · {job.progress}% · {job.status}</p>}
+        {videoUrl && <video controls playsInline src={videoUrl} />}
+      </div>
+    </div>
+  );
+}
+
+function lines(value: string): string[] {
+  return value.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+}

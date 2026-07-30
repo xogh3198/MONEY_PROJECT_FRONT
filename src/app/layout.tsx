@@ -1,30 +1,31 @@
 ﻿import './globals.css';
 import '@/styles/promotion-map.css';
+import '@/styles/investboard-hub.css';
 import type { Metadata } from 'next';
 import AppShell from '@/components/AppShell';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://investboard.cloud'),
-  title: { default: '홍보지도 | 홍보의 다음 한 걸음을 선명하게', template: '%s | 홍보지도' },
-  description: 'URL, 상품, 매장, 앱, 소개글에서 실행 가능한 홍보 계획과 검수형 AI 영상 초안을 만듭니다.',
-  keywords: ['홍보 계획', '마케팅 채널', '홍보 영상', 'AI 영상', '소상공인 마케팅', '콘텐츠 마케팅'],
-  authors: [{ name: '홍보지도 팀', url: 'https://investboard.cloud' }],
-  creator: '홍보지도',
-  publisher: '홍보지도',
+  title: { default: 'InvestBoard | 정보에서 실행까지', template: '%s | InvestBoard' },
+  description: '금융 뉴스·토론 InvestingBoard와 홍보 계획·영상 제작 마케팅맵을 한곳에서 이용하세요.',
+  keywords: ['금융 뉴스', '투자 커뮤니티', '홍보 계획', '마케팅 채널', '홍보 영상', 'AI 영상'],
+  authors: [{ name: 'InvestBoard', url: 'https://investboard.cloud' }],
+  creator: 'InvestBoard',
+  publisher: 'InvestBoard',
   openGraph: {
-    title: '홍보지도 | 홍보의 다음 한 걸음을 선명하게',
-    description: '홍보할 대상을 입력하면 채널, 비용, 이번 주 행동과 영상 초안을 한 흐름으로 정리합니다.',
+    title: 'InvestBoard | 정보에서 실행까지',
+    description: '금융 이슈를 읽고 토론하거나, 내 서비스의 홍보 경로와 영상을 설계하세요.',
     url: 'https://investboard.cloud',
-    siteName: '홍보지도',
+    siteName: 'InvestBoard',
     type: 'website',
     locale: 'ko_KR',
-    images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: '홍보지도' }],
+    images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'InvestBoard' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '홍보지도 | 홍보의 다음 한 걸음을 선명하게',
-    description: '홍보 계획과 검수형 AI 영상 초안을 한 흐름으로 만듭니다.',
+    title: 'InvestBoard | 정보에서 실행까지',
+    description: '금융 뉴스·토론과 홍보 계획·영상 제작을 목적에 따라 이용하세요.',
     images: ['/opengraph-image.png'],
   },
   robots: {
