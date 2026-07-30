@@ -155,6 +155,9 @@ export default function PromotionPlanner() {
         </a>
         <nav aria-label="주요 메뉴">
           <a href="#planner">계획 만들기</a>
+          <a href="/cases/investboard?utm_source=promotion-map-nav&utm_medium=internal&utm_campaign=product-bridge">
+            운영 사례
+          </a>
           <a href="#how">작동 방식</a>
         </nav>
         <span className="pilot-badge">
@@ -183,8 +186,17 @@ export default function PromotionPlanner() {
               무료로 실행지도 만들기
               <span aria-hidden="true">↗</span>
             </a>
-            <span className="hero-note">게시·광고 자동 집행 없음</span>
+            <a
+              className="hero-secondary"
+              href="/forum?utm_source=promotion-map-hero&utm_medium=internal&utm_campaign=product-bridge"
+            >
+              금융 뉴스·토론 보기
+              <span aria-hidden="true">→</span>
+            </a>
           </div>
+          <p className="hero-note">
+            사업 홍보가 필요하면 여기서 시작하세요. 금융 정보를 찾으셨다면 InvestingBoard로 바로 이동합니다.
+          </p>
           <ul className="hero-points" aria-label="홍보지도 핵심 결과">
             <li>
               <strong>5+</strong>
@@ -243,6 +255,38 @@ export default function PromotionPlanner() {
             <span>추천 근거 포함</span>
             <span>검토 후 직접 실행</span>
           </div>
+        </div>
+      </section>
+
+      <section className="purpose-gateway" aria-labelledby="purpose-title">
+        <div className="purpose-copy">
+          <p className="section-kicker">CHOOSE YOUR PATH</p>
+          <h2 id="purpose-title">같은 기술, 다른 방문 목적.</h2>
+          <p>
+            홍보지도는 사업자의 실행 계획을 만들고, InvestingBoard는 금융 뉴스와 토론을 제공합니다.
+            두 제품이 연결된 이유는 별도 사례 페이지에서 투명하게 설명합니다.
+          </p>
+        </div>
+        <div className="purpose-options">
+          <a className="purpose-option is-primary" href="#planner">
+            <small>홍보가 필요해요</small>
+            <strong>내 사업의 실행지도 만들기</strong>
+            <span>무료로 시작 →</span>
+          </a>
+          <a
+            className="purpose-option"
+            href="/forum?utm_source=promotion-map-gateway&utm_medium=internal&utm_campaign=product-bridge"
+          >
+            <small>금융 정보를 보러 왔어요</small>
+            <strong>InvestingBoard 뉴스·토론</strong>
+            <span>포럼으로 이동 →</span>
+          </a>
+          <a
+            className="purpose-context"
+            href="/cases/investboard?utm_source=promotion-map-gateway&utm_medium=internal&utm_campaign=product-bridge"
+          >
+            왜 함께 있나요? <b>실제 운영 사례 보기 ↗</b>
+          </a>
         </div>
       </section>
 

@@ -175,7 +175,7 @@ export default function PromotionVideoStudioPage() {
         </Link>
         <nav aria-label="주요 메뉴">
           <Link href="/">실행지도</Link>
-          <Link href="/forum">InvestingBoard</Link>
+          <Link href="/cases/investboard">InvestingBoard 사례</Link>
         </nav>
         <span className="pilot-badge"><i /> HUMAN REVIEW</span>
       </header>

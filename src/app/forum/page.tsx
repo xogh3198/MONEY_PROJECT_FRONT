@@ -79,6 +79,20 @@ export default function ForumPage() {
   return (
     <div>
       <ForumTabs />
+      <aside className="mb-5 flex flex-col gap-3 rounded-lg border border-accent/20 bg-accent/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold text-text-primary">InvestBoard는 독립된 금융 뉴스·토론 공간입니다.</p>
+          <p className="mt-1 text-[11px] leading-5 text-text-secondary">
+            홍보지도가 직접 운영하며 콘텐츠 발견부터 사이트 방문까지의 흐름을 검증하는 첫 사례이기도 합니다.
+          </p>
+        </div>
+        <Link
+          href="/cases/investboard?utm_source=investboard-intro&utm_medium=internal&utm_campaign=product-bridge"
+          className="shrink-0 text-xs font-semibold text-accent hover:underline"
+        >
+          만든 방식 보기 →
+        </Link>
+      </aside>
       <div className="mb-5">
         <h1 className="text-xl font-bold">경제뉴스</h1>
         <div className="flex items-center gap-2 mt-1">

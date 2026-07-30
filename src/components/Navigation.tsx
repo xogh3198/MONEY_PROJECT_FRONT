@@ -6,7 +6,11 @@ import { useEffect, useState } from 'react';
 const NAV_ITEMS = [
   { href: '/forum', label: '뉴스', icon: '📰' },
   { href: '/forum/community', label: '커뮤니티', icon: '💬' },
-  { href: '/', label: '홍보지도', icon: '↗' },
+  {
+    href: '/cases/investboard?utm_source=investboard&utm_medium=internal&utm_campaign=product-bridge',
+    label: '만든 방식',
+    icon: '↗',
+  },
 ];
 
 const MOBILE_NAV_ITEMS = NAV_ITEMS;
