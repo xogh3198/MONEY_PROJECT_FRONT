@@ -73,6 +73,19 @@ export interface ContentScriptDraft {
   sourceCredits: string[];
 }
 
+export interface PromotionVideoInput {
+  sourceType: 'URL' | 'TEXT' | 'PRODUCT' | 'PLACE' | 'APP' | 'CONTENT';
+  title: string;
+  description: string;
+  sourceUrl?: string;
+  referenceLinks: string[];
+  targetAudience: string;
+  goal: string;
+  callToAction: string;
+  verifiedFacts: string[];
+  ownedAssetNotes: string;
+}
+
 export type VideoRenderQuality = 'PREVIEW' | 'FINAL';
 export type VideoRenderStatus = 'QUEUED' | 'RENDERING' | 'COMPLETED' | 'FAILED';
 

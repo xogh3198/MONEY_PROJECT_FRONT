@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     const generated = await generateGeminiJson<GeneratedDraft>(prompt, SCRIPT_SCHEMA);
     const draft: ContentScriptDraft = {
       ...generated,
-      experimentId: `content-${new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14)}-${opportunity.id.slice(0, 8)}`,
+      experimentId: `content-${compactTimestamp()}-${opportunity.id.slice(0, 8)}`,
       status: 'DRAFT',
       requiresHumanReview: true,
       generatedAt: new Date().toISOString(),
@@ -98,6 +98,16 @@ export async function POST(request: NextRequest) {
       { status: 502 },
     );
   }
+}
+
+function compactTimestamp(): string {
+  return new Date().toISOString()
+    .replaceAll('-', '')
+    .replaceAll(':', '')
+    .replaceAll('.', '')
+    .replaceAll('T', '')
+    .replaceAll('Z', '')
+    .slice(0, 14);
 }
 
 function buildPrompt(opportunity: ContentOpportunity): string {

@@ -1,199 +1,125 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
 import {
-  ContentOpportunity,
   ContentScriptDraft,
+  PromotionVideoInput,
   VideoRenderJob,
   VideoRenderQuality,
 } from '@/lib/content-studio';
 
-const STORAGE_KEY = 'investboard_content_studio_key';
-const REVIEW_STORAGE_KEY = 'investboard_content_studio_reviews_v1';
+const ACCESS_KEY_STORAGE = 'promotion_map_studio_key';
+const DRAFT_STORAGE = 'promotion_map_video_draft_v1';
 
-type ReviewDecision = 'KEEP' | 'HOLD' | 'DROP' | 'APPROVE' | 'REVISE' | 'REJECT';
+const sourceTypes: Array<{ value: PromotionVideoInput['sourceType']; label: string }> = [
+  { value: 'URL', label: '웹사이트·링크' },
+  { value: 'TEXT', label: '소개글·아이디어' },
+  { value: 'PRODUCT', label: '상품·서비스' },
+  { value: 'PLACE', label: '매장·장소' },
+  { value: 'APP', label: '앱' },
+  { value: 'CONTENT', label: '기존 콘텐츠' },
+];
 
-interface ReviewRecord {
-  id: string;
-  kind: 'opportunity' | 'draft';
-  title: string;
-  decision: ReviewDecision;
-  reviewedAt: string;
-}
+const initialInput: PromotionVideoInput = {
+  sourceType: 'URL',
+  title: '',
+  description: '',
+  sourceUrl: '',
+  referenceLinks: [],
+  targetAudience: '',
+  goal: '관심을 얻고 상세 페이지 방문',
+  callToAction: '대표 페이지에서 자세히 알아보기',
+  verifiedFacts: [],
+  ownedAssetNotes: '',
+};
 
-interface OperationsStatus {
-  generatedAt: string;
-  integrations: {
-    naverDataLabEnabled: boolean;
-    naverCredentialsConfigured: boolean;
-    externalMetricsEnabled: boolean;
-    youtubeApiConfigured: boolean;
-  };
-  articles: {
-    total: number;
-    internalViewed: number;
-    internalCommented: number;
-    internalVoted: number;
-    externalValuesAvailable: number;
-    searchInterestAvailable: number;
-    lastExternalMetricsUpdate?: string;
-    lastSearchInterestUpdate?: string;
-    externalStatusCounts: Record<string, number>;
-  };
-  collectors: Array<{
-    name: string;
-    status: string;
-    enabled: boolean;
-    configured: boolean;
-    lastAttemptAt?: string;
-    lastSuccessAt?: string;
-    lastFailureAt?: string;
-    processedCount?: number;
-    availableCount?: number;
-    message?: string;
-  }>;
-}
-
-export default function ContentStudioPage() {
+export default function PromotionVideoStudioPage() {
   const [accessKey, setAccessKey] = useState('');
   const [keyInput, setKeyInput] = useState('');
-  const [opportunities, setOpportunities] = useState<ContentOpportunity[]>([]);
-  const [selected, setSelected] = useState<ContentOpportunity | null>(null);
+  const [input, setInput] = useState(initialInput);
+  const [referencesText, setReferencesText] = useState('');
+  const [factsText, setFactsText] = useState('');
   const [draft, setDraft] = useState<ContentScriptDraft | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [draftLoading, setDraftLoading] = useState(false);
-  const [operationsStatus, setOperationsStatus] = useState<OperationsStatus | null>(null);
-  const [statusLoading, setStatusLoading] = useState(false);
-  const [reviews, setReviews] = useState<Record<string, ReviewRecord>>({});
-  const [videoJob, setVideoJob] = useState<VideoRenderJob | null>(null);
+  const [approved, setApproved] = useState(false);
+  const [job, setJob] = useState<VideoRenderJob | null>(null);
   const [videoUrl, setVideoUrl] = useState('');
+  const [loading, setLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const savedKey = localStorage.getItem(ACCESS_KEY_STORAGE) || '';
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE);
+    if (savedKey) {
+      setAccessKey(savedKey);
+      setKeyInput(savedKey);
+    }
+    if (savedDraft) {
+      try {
+        setDraft(JSON.parse(savedDraft) as ContentScriptDraft);
+      } catch {
+        localStorage.removeItem(DRAFT_STORAGE);
+      }
+    }
+  }, []);
 
   useEffect(() => () => {
     if (videoUrl) URL.revokeObjectURL(videoUrl);
   }, [videoUrl]);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) || '';
-    const savedReviews = localStorage.getItem(REVIEW_STORAGE_KEY);
-    if (savedReviews) {
-      try {
-        setReviews(JSON.parse(savedReviews));
-      } catch {
-        localStorage.removeItem(REVIEW_STORAGE_KEY);
-      }
-    }
-    if (saved) {
-      setAccessKey(saved);
-      setKeyInput(saved);
-      void loadOpportunities(saved);
-      void loadOperationsStatus(saved);
-    }
-  }, []);
-
   const authenticate = (event: FormEvent) => {
     event.preventDefault();
-    const nextKey = keyInput.trim();
-    if (!nextKey) return;
-    localStorage.setItem(STORAGE_KEY, nextKey);
-    setAccessKey(nextKey);
-    void loadOpportunities(nextKey);
-    void loadOperationsStatus(nextKey);
+    const key = keyInput.trim();
+    if (!key) return;
+    localStorage.setItem(ACCESS_KEY_STORAGE, key);
+    setAccessKey(key);
   };
 
-  const loadOpportunities = async (key = accessKey) => {
+  const updateInput = <K extends keyof PromotionVideoInput>(key: K, value: PromotionVideoInput[K]) => {
+    setInput(current => ({ ...current, [key]: value }));
+  };
+
+  const createDraft = async (event: FormEvent) => {
+    event.preventDefault();
     setLoading(true);
     setError('');
-    try {
-      const response = await fetch('/api/content-studio/opportunities?limit=12', {
-        cache: 'no-store',
-        headers: { 'x-content-studio-key': key },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || '후보를 불러오지 못했습니다.');
-      setOpportunities(data.opportunities || []);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '후보를 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadOperationsStatus = async (key = accessKey) => {
-    setStatusLoading(true);
-    try {
-      const response = await fetch('/api/content-studio/status', {
-        cache: 'no-store',
-        headers: { 'x-content-studio-key': key },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || '운영 상태를 불러오지 못했습니다.');
-      setOperationsStatus(data);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '운영 상태를 불러오지 못했습니다.');
-    } finally {
-      setStatusLoading(false);
-    }
-  };
-
-  const saveReview = (
-    id: string,
-    kind: ReviewRecord['kind'],
-    title: string,
-    decision: ReviewDecision,
-  ) => {
-    setReviews(current => {
-      const next = {
-        ...current,
-        [id]: { id, kind, title, decision, reviewedAt: new Date().toISOString() },
-      };
-      localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const copyReviewLog = async () => {
-    const payload = {
-      experimentId: 'E-001',
-      exportedAt: new Date().toISOString(),
-      reviews: Object.values(reviews).sort((a, b) => a.reviewedAt.localeCompare(b.reviewedAt)),
-    };
-    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-  };
-
-  const createDraft = async (opportunity: ContentOpportunity) => {
-    setSelected(opportunity);
-    setDraft(null);
-    setVideoJob(null);
+    setApproved(false);
+    setJob(null);
     setVideoUrl('');
-    setDraftLoading(true);
-    setError('');
+
     try {
-      const response = await fetch('/api/content-studio/script', {
+      const payload: PromotionVideoInput = {
+        ...input,
+        referenceLinks: lines(referencesText),
+        verifiedFacts: lines(factsText),
+      };
+      const response = await fetch('/api/content-studio/promotion-script', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-content-studio-key': accessKey,
         },
-        body: JSON.stringify({ opportunity }),
+        body: JSON.stringify({ input: payload }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || '초안을 생성하지 못했습니다.');
+      if (!response.ok) throw new Error(data.error || '영상 초안을 만들지 못했습니다.');
       setDraft(data.draft);
+      localStorage.setItem(DRAFT_STORAGE, JSON.stringify(data.draft));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '초안을 생성하지 못했습니다.');
+      setError(cause instanceof Error ? cause.message : '영상 초안을 만들지 못했습니다.');
     } finally {
-      setDraftLoading(false);
+      setLoading(false);
     }
   };
 
   const renderVideo = async (quality: VideoRenderQuality) => {
-    if (!draft || reviews[draft.experimentId]?.decision !== 'APPROVE') return;
+    if (!draft || !approved) return;
     setVideoLoading(true);
-    setVideoJob(null);
-    setVideoUrl('');
     setError('');
+    setJob(null);
+    setVideoUrl('');
+
     try {
       const submitResponse = await fetch('/api/content-studio/video', {
         method: 'POST',
@@ -205,14 +131,13 @@ export default function ContentStudioPage() {
       });
       const submitted = await submitResponse.json();
       if (!submitResponse.ok) throw new Error(submitted.error || '영상 렌더를 시작하지 못했습니다.');
-      let current = submitted as VideoRenderJob;
-      setVideoJob(current);
 
-      const deadline = Date.now() + 20 * 60 * 1000;
+      let current = submitted as VideoRenderJob;
+      setJob(current);
+      const deadline = Date.now() + 20 * 60 * 1_000;
+
       while (current.status === 'QUEUED' || current.status === 'RENDERING') {
-        if (Date.now() > deadline) {
-          throw new Error('영상 렌더가 20분 안에 끝나지 않았습니다. 작업 ID로 상태를 다시 확인하세요.');
-        }
+        if (Date.now() > deadline) throw new Error('영상 렌더가 20분 안에 끝나지 않았습니다.');
         await new Promise(resolve => window.setTimeout(resolve, 3_000));
         const statusResponse = await fetch(`/api/content-studio/video/${current.id}`, {
           cache: 'no-store',
@@ -221,22 +146,19 @@ export default function ContentStudioPage() {
         const statusData = await statusResponse.json();
         if (!statusResponse.ok) throw new Error(statusData.error || '영상 상태를 확인하지 못했습니다.');
         current = statusData as VideoRenderJob;
-        setVideoJob(current);
-      }
-      if (current.status === 'FAILED') {
-        throw new Error(current.errorMessage || '영상 렌더에 실패했습니다.');
+        setJob(current);
       }
 
+      if (current.status === 'FAILED') throw new Error(current.errorMessage || '영상 렌더에 실패했습니다.');
       const fileResponse = await fetch(`/api/content-studio/video/${current.id}/file`, {
         cache: 'no-store',
         headers: { 'x-content-studio-key': accessKey },
       });
       if (!fileResponse.ok) {
-        const fileError = await fileResponse.json().catch(() => ({}));
-        throw new Error(fileError.error || '완료된 영상 파일을 불러오지 못했습니다.');
+        const detail = await fileResponse.json().catch(() => ({}));
+        throw new Error(detail.error || '영상 파일을 불러오지 못했습니다.');
       }
-      const objectUrl = URL.createObjectURL(await fileResponse.blob());
-      setVideoUrl(objectUrl);
+      setVideoUrl(URL.createObjectURL(await fileResponse.blob()));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '영상 렌더에 실패했습니다.');
     } finally {
@@ -244,583 +166,186 @@ export default function ContentStudioPage() {
     }
   };
 
-  const disconnect = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setAccessKey('');
-    setKeyInput('');
-    setOpportunities([]);
-    setSelected(null);
-    setDraft(null);
-    setVideoJob(null);
-    setVideoUrl('');
-    setError('');
-  };
-
   return (
-    <div className="space-y-6">
-      <section className="bg-card border border-border rounded-xl p-5">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <div className="text-xs font-semibold text-accent mb-2">INTERNAL · NOINDEX</div>
-            <h1 className="text-2xl font-bold">콘텐츠 기회 스튜디오</h1>
-            <p className="text-sm text-text-secondary mt-2 max-w-2xl leading-relaxed">
-              최신 뉴스와 시장지표에서 금융 관련성이 높은 주제를 찾고, 출처·검수 항목이 포함된
-              45~60초 쇼츠 초안을 만듭니다. 이 화면은 게시기가 아니라 검수 전 초안 도구입니다.
-            </p>
-          </div>
-          {accessKey && (
-            <button onClick={disconnect} className="text-xs text-text-secondary hover:text-text-primary">
-              접근 키 지우기
-            </button>
-          )}
-        </div>
+    <main className="promotion-root studio-page">
+      <header className="topbar">
+        <Link className="brand" href="/">
+          <span className="brand-mark">P</span>
+          <span className="brand-copy"><strong>홍보지도</strong><small>PROMOTION MAP</small></span>
+        </Link>
+        <nav aria-label="주요 메뉴">
+          <Link href="/">실행지도</Link>
+          <Link href="/forum">InvestingBoard</Link>
+        </nav>
+        <span className="pilot-badge"><i /> HUMAN REVIEW</span>
+      </header>
 
-        {!accessKey ? (
-          <form onSubmit={authenticate} className="mt-5 flex flex-col sm:flex-row gap-2 max-w-xl">
+      <section className="studio-hero">
+        <p className="section-kicker">PROMOTION VIDEO STUDIO</p>
+        <h1>홍보할 내용을 넣으면,<br /><em>말하고 보여줄 순서</em>를 만듭니다.</h1>
+        <p>
+          URL만 필요한 서비스가 아닙니다. 소개글, 상품, 매장, 앱, 기존 콘텐츠와 사용권이 있는
+          사진을 바탕으로 30~45초 대본·큰 자막·7개 장면을 먼저 만듭니다.
+        </p>
+        <div className="studio-flow" aria-label="영상 제작 흐름">
+          <span><b>01</b> 근거 입력</span><i>→</i>
+          <span><b>02</b> AI 초안</span><i>→</i>
+          <span><b>03</b> 사람 검수</span><i>→</i>
+          <span><b>04</b> MP4 미리보기</span>
+        </div>
+      </section>
+
+      {!accessKey ? (
+        <section className="studio-login">
+          <div>
+            <p className="section-kicker">PRIVATE PILOT</p>
+            <h2>내부 검수 키로 스튜디오를 엽니다.</h2>
+            <p>대본과 렌더 기능은 비용과 오남용을 막기 위해 공개하지 않습니다.</p>
+          </div>
+          <form onSubmit={authenticate}>
             <input
               type="password"
               value={keyInput}
               onChange={event => setKeyInput(event.target.value)}
               placeholder="CONTENT_STUDIO_ACCESS_KEY"
               autoComplete="current-password"
-              className="flex-1 bg-[#0d1117] border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-accent"
             />
-            <button className="bg-accent text-black font-semibold rounded-lg px-4 py-2 text-sm">
-              스튜디오 열기
-            </button>
+            <button type="submit">스튜디오 열기</button>
           </form>
-        ) : (
-          <div className="mt-5 flex items-center gap-3">
-            <button
-              onClick={() => void loadOpportunities()}
-              disabled={loading}
-              className="bg-accent text-black font-semibold rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-            >
-              {loading ? '신호 분석 중…' : '최신 후보 다시 분석'}
+        </section>
+      ) : (
+        <section className="studio-workspace">
+          <form className="studio-input-card" onSubmit={createDraft}>
+            <div className="studio-card-heading">
+              <span>01</span>
+              <div><p className="section-kicker">SOURCE BRIEF</p><h2>확인된 내용만 넣어주세요.</h2></div>
+            </div>
+
+            <fieldset>
+              <legend>홍보 대상</legend>
+              <div className="studio-type-grid">
+                {sourceTypes.map(item => (
+                  <label className={input.sourceType === item.value ? 'active' : ''} key={item.value}>
+                    <input
+                      type="radio"
+                      value={item.value}
+                      checked={input.sourceType === item.value}
+                      onChange={() => updateInput('sourceType', item.value)}
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <label>이름<input required maxLength={160} value={input.title} onChange={event => updateInput('title', event.target.value)} placeholder="예: 동네 로스터리의 원두 정기구독" /></label>
+            <label>대표 URL (선택)<input type="url" value={input.sourceUrl || ''} onChange={event => updateInput('sourceUrl', event.target.value)} placeholder="https://example.com" /></label>
+            <label>누구의 어떤 문제를 어떻게 해결하나요?
+              <textarea required rows={6} value={input.description} onChange={event => updateInput('description', event.target.value)} placeholder="기능 목록보다 고객 상황, 해결 방식, 차별점을 구체적으로 적어주세요." />
+            </label>
+            <div className="studio-field-pair">
+              <label>핵심 고객<input required value={input.targetAudience} onChange={event => updateInput('targetAudience', event.target.value)} placeholder="예: 원두 선택이 어려운 1인 가구" /></label>
+              <label>영상 목표<input required value={input.goal} onChange={event => updateInput('goal', event.target.value)} /></label>
+            </div>
+            <label>마지막 행동 요청<input required value={input.callToAction} onChange={event => updateInput('callToAction', event.target.value)} placeholder="예: 샘플 구성 확인하기" /></label>
+            <label>확인 가능한 사실 (선택, 한 줄에 하나)
+              <textarea rows={4} value={factsText} onChange={event => setFactsText(event.target.value)} placeholder={"예: 서울 성수동에서 직접 로스팅\n예: 주문 후 로스팅 날짜 표기"} />
+            </label>
+            <label>참고 링크 (선택, 한 줄에 하나)
+              <textarea rows={3} value={referencesText} onChange={event => setReferencesText(event.target.value)} placeholder={"공식 상세 페이지, 플레이스, 앱스토어 등 최대 5개"} />
+            </label>
+            <label>사용권이 있는 사진·화면
+              <textarea rows={3} value={input.ownedAssetNotes} onChange={event => updateInput('ownedAssetNotes', event.target.value)} placeholder="예: 제품 정면 사진 3장, 포장 영상 1개, 앱 화면 캡처 4장" />
+            </label>
+
+            <button className="studio-generate" disabled={loading} type="submit">
+              {loading ? '대본과 장면을 만드는 중…' : '홍보 영상 초안 만들기 ↗'}
             </button>
-            <span className="text-xs text-text-secondary">외부 게시·광고 집행 없음</span>
-          </div>
-        )}
-      </section>
+            <p className="studio-small-note">외부 페이지 본문이나 이미지를 임의로 복사하지 않습니다. 자동 게시·광고 집행도 하지 않습니다.</p>
+          </form>
 
-      {error && (
-        <div className="bg-[#f85149]/10 border border-[#f85149]/40 text-[#ff7b72] rounded-lg px-4 py-3 text-sm">
-          {error}
-        </div>
-      )}
-
-      {accessKey && (
-        <>
-          <OperationsPanel
-            status={operationsStatus}
-            loading={statusLoading}
-            onRefresh={() => void loadOperationsStatus()}
-          />
-
-          <section className="bg-card border border-border rounded-xl p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h2 className="font-bold">E-001 검수 기록</h2>
-                <p className="text-xs text-text-secondary mt-1">
-                  후보 {Object.values(reviews).filter(item => item.kind === 'opportunity').length}건 ·
-                  대본 {Object.values(reviews).filter(item => item.kind === 'draft').length}건 검수
-                </p>
-              </div>
-              <button
-                onClick={() => void copyReviewLog()}
-                disabled={Object.keys(reviews).length === 0}
-                className="border border-border rounded-lg px-3 py-2 text-xs disabled:opacity-40"
-              >
-                검수 기록 JSON 복사
-              </button>
+          <section className="studio-draft-card">
+            <div className="studio-card-heading">
+              <span>02</span>
+              <div><p className="section-kicker">SCRIPT & SCENES</p><h2>검수할 영상 설계</h2></div>
             </div>
-            <p className="mt-3 text-[11px] leading-5 text-text-secondary">
-              기록은 이 브라우저에만 저장됩니다. 10건 검수 후 JSON을 실험 기록에 첨부해 적합도·사실 오류·수정 시간을 계산합니다.
-            </p>
+            {error && <p className="studio-error" role="alert">{error}</p>}
+            {!draft && !loading && <div className="studio-empty">왼쪽 정보를 입력하면 대본, 자막, 장면 구성이 여기에 표시됩니다.</div>}
+            {loading && <div className="studio-empty">사람이 읽었을 때 어색하지 않은 흐름으로 정리하고 있습니다…</div>}
+            {draft && !loading && (
+              <DraftResult
+                draft={draft}
+                approved={approved}
+                job={job}
+                videoUrl={videoUrl}
+                videoLoading={videoLoading}
+                onApprove={setApproved}
+                onRender={renderVideo}
+              />
+            )}
           </section>
-
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] gap-6">
-          <section className="space-y-3">
-            <div className="flex items-end justify-between">
-              <div>
-                <h2 className="font-bold">제작 후보</h2>
-                <p className="text-xs text-text-secondary mt-1">점수는 관심도의 확정값이 아닌 탐색 우선순위입니다.</p>
-              </div>
-              <span className="text-xs text-text-secondary">{opportunities.length}개</span>
-            </div>
-
-            {loading && opportunities.length === 0 ? (
-              <div className="bg-card border border-border rounded-lg p-8 text-center text-text-secondary">
-                뉴스·시장 신호를 분석하고 있습니다…
-              </div>
-            ) : opportunities.length === 0 ? (
-              <div className="bg-card border border-border rounded-lg p-8 text-center text-text-secondary">
-                금융 관련성이 충분한 후보가 없습니다. 잠시 후 다시 분석해보세요.
-              </div>
-            ) : opportunities.map(opportunity => (
-              <article
-                key={opportunity.id}
-                className={`bg-card border rounded-xl p-4 transition ${
-                  selected?.id === opportunity.id ? 'border-accent' : 'border-border hover:border-text-secondary'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-accent/10 text-accent flex flex-col items-center justify-center flex-shrink-0">
-                    <strong className="text-lg leading-none">{opportunity.trendScore}</strong>
-                    <span className="text-[9px] mt-1">SCORE</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex gap-2 text-[10px] text-text-secondary mb-1">
-                      <span>{opportunity.category}</span>
-                      <span>·</span>
-                      <span>{opportunity.sourceName}</span>
-                    </div>
-                    <h3 className="font-semibold leading-snug">{opportunity.title}</h3>
-                    <p className="text-xs text-text-secondary mt-2 leading-relaxed">{opportunity.angle}</p>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {opportunity.signals.map(signal => (
-                    <span key={signal} className="text-[10px] bg-[#0d1117] border border-border rounded-full px-2 py-1">
-                      {signal}
-                    </span>
-                  ))}
-                </div>
-
-                {opportunity.riskFlags.length > 0 && (
-                  <div className="mt-3 text-[11px] text-[#d29922]">
-                    검수: {opportunity.riskFlags.join(' · ')}
-                  </div>
-                )}
-
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  {opportunity.sourceUrl ? (
-                    <a
-                      href={opportunity.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-accent-blue hover:underline"
-                    >
-                      원문 확인
-                    </a>
-                  ) : <span />}
-                  <button
-                    onClick={() => void createDraft(opportunity)}
-                    disabled={draftLoading}
-                    className="bg-[#238636] hover:bg-[#2ea043] disabled:opacity-50 rounded-lg px-3 py-2 text-xs font-semibold"
-                  >
-                    이 주제로 초안 생성
-                  </button>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/70 pt-3">
-                  <span className="mr-1 text-[10px] text-text-secondary">후보 검수</span>
-                  <ReviewButton
-                    active={reviews[opportunity.id]?.decision === 'KEEP'}
-                    onClick={() => saveReview(opportunity.id, 'opportunity', opportunity.title, 'KEEP')}
-                  >
-                    제작 가치 있음
-                  </ReviewButton>
-                  <ReviewButton
-                    active={reviews[opportunity.id]?.decision === 'HOLD'}
-                    onClick={() => saveReview(opportunity.id, 'opportunity', opportunity.title, 'HOLD')}
-                  >
-                    보류
-                  </ReviewButton>
-                  <ReviewButton
-                    active={reviews[opportunity.id]?.decision === 'DROP'}
-                    onClick={() => saveReview(opportunity.id, 'opportunity', opportunity.title, 'DROP')}
-                  >
-                    제외
-                  </ReviewButton>
-                </div>
-              </article>
-            ))}
-          </section>
-
-          <section className="xl:sticky xl:top-16 xl:self-start">
-            <DraftPanel
-              draft={draft}
-              loading={draftLoading}
-              selected={selected}
-              review={draft ? reviews[draft.experimentId] : undefined}
-              videoJob={videoJob}
-              videoUrl={videoUrl}
-              videoLoading={videoLoading}
-              onRender={quality => void renderVideo(quality)}
-              onReview={(decision) => {
-                if (draft) saveReview(draft.experimentId, 'draft', draft.title, decision);
-              }}
-            />
-          </section>
-        </div>
-        </>
+        </section>
       )}
-    </div>
+    </main>
   );
 }
 
-function DraftPanel({
+function DraftResult({
   draft,
-  loading,
-  selected,
-  review,
-  videoJob,
-  videoUrl,
-  videoLoading,
-  onRender,
-  onReview,
-}: {
-  draft: ContentScriptDraft | null;
-  loading: boolean;
-  selected: ContentOpportunity | null;
-  review?: ReviewRecord;
-  videoJob: VideoRenderJob | null;
-  videoUrl: string;
-  videoLoading: boolean;
-  onRender: (quality: VideoRenderQuality) => void;
-  onReview: (decision: ReviewDecision) => void;
-}) {
-  const copyDraft = async () => {
-    if (!draft) return;
-    await navigator.clipboard.writeText(JSON.stringify(draft, null, 2));
-  };
-
-  if (loading) {
-    return (
-      <div className="bg-card border border-border rounded-xl p-8 text-center">
-        <div className="text-lg mb-2">🤖</div>
-        <div className="font-semibold">검수 가능한 초안을 만들고 있습니다.</div>
-        <div className="text-xs text-text-secondary mt-2">출처, 장면, 금융 고지까지 구조화합니다.</div>
-      </div>
-    );
-  }
-
-  if (!draft) {
-    return (
-      <div className="bg-card border border-border rounded-xl p-8 text-center text-text-secondary">
-        <div className="text-2xl mb-3">🎬</div>
-        <div className="text-sm">후보를 선택하면 쇼츠 초안이 여기에 표시됩니다.</div>
-        {selected && <div className="text-xs mt-2">선택됨: {selected.title}</div>}
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden max-h-[calc(100vh-5rem)] overflow-y-auto">
-      <div className="p-5 border-b border-border">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <span className="text-[10px] font-semibold text-[#d29922]">DRAFT · HUMAN REVIEW REQUIRED</span>
-            <h2 className="text-lg font-bold mt-1">{draft.title}</h2>
-          </div>
-          <button onClick={() => void copyDraft()} className="text-xs text-accent-blue hover:underline flex-shrink-0">
-            JSON 복사
-          </button>
-        </div>
-        <p className="mt-3 bg-accent/10 border border-accent/20 rounded-lg px-3 py-2 text-sm font-semibold">
-          {draft.hook}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-text-secondary">
-          <span>{draft.durationSeconds}초</span>
-          <span>·</span>
-          <span>{draft.targetAudience}</span>
-          <span>·</span>
-          <span>{draft.experimentId}</span>
-        </div>
-      </div>
-
-      <div className="p-5 space-y-5">
-        <div>
-          <h3 className="text-xs font-bold text-text-secondary mb-2">전체 내레이션</h3>
-          <p className="text-sm leading-7 whitespace-pre-line">{draft.narration}</p>
-        </div>
-
-        <div>
-          <h3 className="text-xs font-bold text-text-secondary mb-2">장면 구성</h3>
-          <div className="space-y-2">
-            {draft.scenes.map(scene => (
-              <div key={`${scene.order}-${scene.onScreenText}`} className="bg-[#0d1117] border border-border rounded-lg p-3">
-                <div className="flex justify-between text-[10px] text-text-secondary">
-                  <span>SCENE {scene.order}</span>
-                  <span>{scene.seconds}초</span>
-                </div>
-                <div className="font-semibold text-sm mt-1">{scene.onScreenText}</div>
-                <p className="text-xs mt-2 leading-relaxed">{scene.narration}</p>
-                <p className="text-[11px] text-accent-blue mt-2">화면: {scene.visualDirection}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <InfoBlock title="사이트 CTA" items={[draft.siteCta]} />
-        <InfoBlock title="게시 설명" items={[draft.caption, draft.hashtags.join(' ')]} />
-        <InfoBlock title="사실 확인" items={draft.factChecks} warning />
-        <InfoBlock title="출처" items={draft.sourceCredits} />
-        <InfoBlock title="필수 고지" items={[draft.disclaimer, draft.aiDisclosure]} warning />
-        <div className="border-t border-border pt-4">
-          <h3 className="text-xs font-bold text-text-secondary mb-2">대본 검수 결정</h3>
-          <div className="flex flex-wrap gap-2">
-            <ReviewButton active={review?.decision === 'APPROVE'} onClick={() => onReview('APPROVE')}>
-              사용 가능
-            </ReviewButton>
-            <ReviewButton active={review?.decision === 'REVISE'} onClick={() => onReview('REVISE')}>
-              수정 필요
-            </ReviewButton>
-            <ReviewButton active={review?.decision === 'REJECT'} onClick={() => onReview('REJECT')}>
-              폐기
-            </ReviewButton>
-          </div>
-        </div>
-        <VideoRenderPanel
-          approved={review?.decision === 'APPROVE'}
-          job={videoJob}
-          videoUrl={videoUrl}
-          loading={videoLoading}
-          onRender={onRender}
-        />
-      </div>
-    </div>
-  );
-}
-
-function VideoRenderPanel({
   approved,
   job,
   videoUrl,
-  loading,
+  videoLoading,
+  onApprove,
   onRender,
 }: {
+  draft: ContentScriptDraft;
   approved: boolean;
   job: VideoRenderJob | null;
   videoUrl: string;
-  loading: boolean;
+  videoLoading: boolean;
+  onApprove: (approved: boolean) => void;
   onRender: (quality: VideoRenderQuality) => void;
 }) {
   return (
-    <div className="border-t border-border pt-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-xs font-bold text-text-secondary">AI 음성·자막 MP4</h3>
-          <p className="mt-1 text-[11px] leading-5 text-text-secondary">
-            대본을 ‘사용 가능’으로 승인한 뒤에만 렌더합니다. 외부 게시나 계정 업로드는 하지 않습니다.
-          </p>
-        </div>
-        {job && (
-          <span className={`text-[10px] font-semibold ${
-            job.status === 'COMPLETED' ? 'text-[#3fb950]'
-              : job.status === 'FAILED' ? 'text-[#f85149]'
-                : 'text-[#d29922]'
-          }`}>
-            {job.status}
-          </span>
-        )}
+    <div className="studio-result">
+      <div className="studio-hook">
+        <small>{draft.durationSeconds}초 · {draft.targetAudience}</small>
+        <h3>{draft.title}</h3>
+        <p>{draft.hook}</p>
       </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          onClick={() => onRender('PREVIEW')}
-          disabled={!approved || loading}
-          className="rounded-lg bg-[#238636] px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {loading && job?.quality === 'PREVIEW' ? '미리보기 제작 중…' : '540×960 미리보기'}
+      <div className="studio-scenes">
+        {draft.scenes.map(scene => (
+          <article key={`${scene.order}-${scene.onScreenText}`}>
+            <span>SCENE {String(scene.order).padStart(2, '0')} · {scene.seconds}s</span>
+            <h4>{scene.onScreenText}</h4>
+            <p>{scene.narration}</p>
+            <small>화면: {scene.visualDirection}</small>
+          </article>
+        ))}
+      </div>
+      <div className="studio-review">
+        <h3>게시 전 확인</h3>
+        <ul>{draft.factChecks.map(item => <li key={item}>{item}</li>)}</ul>
+        <p><b>출처</b> {draft.sourceCredits.join(' · ')}</p>
+        <p><b>고지</b> {draft.disclaimer} {draft.aiDisclosure}</p>
+        <label>
+          <input type="checkbox" checked={approved} onChange={event => onApprove(event.target.checked)} />
+          사실, 표현, 이미지 사용권을 확인했고 미리보기 렌더를 승인합니다.
+        </label>
+      </div>
+      <div className="studio-render">
+        <button type="button" disabled={!approved || videoLoading} onClick={() => onRender('PREVIEW')}>
+          {videoLoading ? '음성·자막 MP4 렌더 중…' : '저해상도 미리보기 만들기'}
         </button>
-        <button
-          onClick={() => onRender('FINAL')}
-          disabled={!approved || loading}
-          className="rounded-lg border border-border px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {loading && job?.quality === 'FINAL' ? '최종본 제작 중…' : '1080×1920 최종본'}
-        </button>
-      </div>
-
-      {!approved && (
-        <p className="mt-2 text-[11px] text-[#d29922]">먼저 사실·출처·권리를 검토하고 ‘사용 가능’을 선택하세요.</p>
-      )}
-
-      {job && (
-        <div className="mt-3 rounded-lg border border-border bg-[#0d1117] p-3">
-          <div className="flex items-center justify-between text-[11px]">
-            <span>{job.stage}</span>
-            <span>{job.progress}%</span>
-          </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
-            <div
-              className="h-full rounded-full bg-accent transition-all"
-              style={{ width: `${Math.max(2, job.progress)}%` }}
-            />
-          </div>
-          <div className="mt-2 text-[10px] text-text-secondary">
-            작업 {job.id.slice(0, 8)} · {job.voiceProvider || '음성 확인 중'}
-            {job.durationSeconds ? ` · ${job.durationSeconds.toFixed(1)}초` : ''}
-          </div>
-          {job.errorMessage && <p className="mt-2 text-[11px] text-[#f85149]">{job.errorMessage}</p>}
-        </div>
-      )}
-
-      {videoUrl && job?.status === 'COMPLETED' && (
-        <div className="mt-4">
-          <video
-            controls
-            playsInline
-            preload="metadata"
-            src={videoUrl}
-            className="mx-auto aspect-[9/16] max-h-[560px] w-full max-w-[315px] rounded-xl bg-black"
-          />
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <span className="text-[10px] text-text-secondary">게시 전 사실·자막·이미지 권리를 다시 확인하세요.</span>
-            <a
-              href={videoUrl}
-              download={`investboard-${job.experimentId}-${job.quality.toLowerCase()}.mp4`}
-              className="flex-shrink-0 text-xs font-semibold text-accent-blue hover:underline"
-            >
-              MP4 다운로드
-            </a>
-          </div>
-          {job.assetCredits && (
-            <details className="mt-3 text-[10px] text-text-secondary">
-              <summary className="cursor-pointer">이미지 출처 확인</summary>
-              <pre className="mt-2 whitespace-pre-wrap font-sans leading-5">{job.assetCredits}</pre>
-            </details>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function OperationsPanel({
-  status,
-  loading,
-  onRefresh,
-}: {
-  status: OperationsStatus | null;
-  loading: boolean;
-  onRefresh: () => void;
-}) {
-  const datalab = status?.collectors.find(item => item.name === 'NAVER_DATALAB');
-  const external = status?.collectors.find(item => item.name === 'EXTERNAL_ENGAGEMENT');
-
-  return (
-    <section className="bg-card border border-border rounded-xl p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="font-bold">운영 데이터 진단</h2>
-          <p className="text-xs text-text-secondary mt-1">키 값은 노출하지 않고 설정 여부·마지막 실행·실제 수집률만 표시합니다.</p>
-        </div>
-        <button onClick={onRefresh} disabled={loading} className="border border-border rounded-lg px-3 py-2 text-xs disabled:opacity-50">
-          {loading ? '확인 중…' : '상태 새로고침'}
-        </button>
-      </div>
-
-      {!status ? (
-        <p className="mt-4 text-sm text-text-secondary">아직 운영 상태를 불러오지 못했습니다.</p>
-      ) : (
-        <>
-          <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
-            <MetricCard label="전체 뉴스" value={status.articles.total} />
-            <MetricCard label="DataLab 값 있음" value={status.articles.searchInterestAvailable} total={status.articles.total} />
-            <MetricCard label="외부 실수치 있음" value={status.articles.externalValuesAvailable} total={status.articles.total} />
-            <MetricCard label="내부 조회 발생" value={status.articles.internalViewed} total={status.articles.total} />
-          </div>
-
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            <CollectorCard
-              title="네이버 DataLab"
-              configured={status.integrations.naverCredentialsConfigured}
-              state={datalab}
-              emptyMessage="첫 실행 전이거나 상태 저장 기능 배포 직후입니다."
-            />
-            <CollectorCard
-              title="외부 반응 수집"
-              configured={status.integrations.externalMetricsEnabled}
-              state={external}
-              emptyMessage="첫 실행 전이거나 상태 저장 기능 배포 직후입니다."
-            />
-          </div>
-
-          <div className="mt-3 text-[11px] leading-5 text-text-secondary">
-            외부 상태: {Object.entries(status.articles.externalStatusCounts)
-              .map(([name, count]) => `${name} ${count}`)
-              .join(' · ')}
-          </div>
-        </>
-      )}
-    </section>
-  );
-}
-
-function MetricCard({ label, value, total }: { label: string; value: number; total?: number }) {
-  const percent = total ? Math.round((value / total) * 1000) / 10 : null;
-  return (
-    <div className="rounded-lg border border-border bg-[#0d1117] p-3">
-      <div className="text-[10px] text-text-secondary">{label}</div>
-      <div className="mt-1 text-lg font-bold">
-        {value.toLocaleString()}
-        {percent !== null && <span className="ml-1 text-[10px] font-normal text-text-secondary">({percent}%)</span>}
+        <button type="button" disabled={!approved || videoLoading} onClick={() => onRender('FINAL')}>최종본 렌더</button>
+        {job && <p>{job.stage} · {job.progress}% · {job.status}</p>}
+        {videoUrl && <video controls playsInline src={videoUrl} />}
       </div>
     </div>
   );
 }
 
-function CollectorCard({
-  title,
-  configured,
-  state,
-  emptyMessage,
-}: {
-  title: string;
-  configured: boolean;
-  state?: OperationsStatus['collectors'][number];
-  emptyMessage: string;
-}) {
-  return (
-    <div className="rounded-lg border border-border p-4 text-xs">
-      <div className="flex items-center justify-between gap-2">
-        <strong>{title}</strong>
-        <span className={state?.status === 'SUCCESS' ? 'text-[#3fb950]' : state?.status === 'FAILED' ? 'text-[#f85149]' : 'text-[#d29922]'}>
-          {state?.status || (configured ? 'WAITING' : 'NOT CONFIGURED')}
-        </span>
-      </div>
-      <p className="mt-2 leading-5 text-text-secondary">{state?.message || emptyMessage}</p>
-      {state?.lastAttemptAt && (
-        <p className="mt-2 text-[10px] text-text-secondary">
-          마지막 시도 {new Date(state.lastAttemptAt).toLocaleString('ko-KR')} · 처리 {state.processedCount || 0} · 확보 {state.availableCount || 0}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function ReviewButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-md border px-2.5 py-1.5 text-[11px] ${
-        active ? 'border-accent bg-accent/10 text-accent' : 'border-border text-text-secondary hover:text-text-primary'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function InfoBlock({ title, items, warning = false }: { title: string; items: string[]; warning?: boolean }) {
-  return (
-    <div>
-      <h3 className="text-xs font-bold text-text-secondary mb-2">{title}</h3>
-      <ul className={`space-y-1.5 text-xs leading-relaxed ${warning ? 'text-[#d29922]' : 'text-text-primary'}`}>
-        {items.filter(Boolean).map((item, index) => <li key={`${title}-${index}`}>• {item}</li>)}
-      </ul>
-    </div>
-  );
+function lines(value: string): string[] {
+  return value.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
 }

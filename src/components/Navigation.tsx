@@ -4,16 +4,12 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
-  { href: '/', label: '홈', icon: '🏠' },
-  { href: '/briefing', label: '브리핑', icon: '⚡' },
   { href: '/forum', label: '뉴스', icon: '📰' },
-  { href: '/market', label: '시장', icon: '📊' },
-  { href: '/calendar', label: '캘린더', icon: '📅' },
-  { href: '/tools', label: '도구', icon: '🛠' },
-  { href: '/dividend', label: '배당', icon: '💰' },
+  { href: '/forum/community', label: '커뮤니티', icon: '💬' },
+  { href: '/', label: '홍보지도', icon: '↗' },
 ];
 
-const MOBILE_NAV_ITEMS = [NAV_ITEMS[0], NAV_ITEMS[1], NAV_ITEMS[2], NAV_ITEMS[3], NAV_ITEMS[5]];
+const MOBILE_NAV_ITEMS = NAV_ITEMS;
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -36,7 +32,7 @@ export default function Navigation() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    window.location.href = '/';
+    window.location.href = '/forum';
   };
 
   return (
@@ -44,7 +40,7 @@ export default function Navigation() {
       {/* 데스크톱 상단 네비 */}
       <header className="bg-card border-b border-border sticky top-0 z-50 hidden md:block">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-12">
-          <Link href="/" className="text-lg font-bold text-accent">InvestBoard</Link>
+          <Link href="/forum" className="text-lg font-bold text-accent">InvestBoard</Link>
 
           <nav className="flex items-center gap-1">
             {NAV_ITEMS.map(item => (
@@ -77,7 +73,7 @@ export default function Navigation() {
       {/* 모바일 상단 헤더 (간소화) */}
       <header className="bg-card border-b border-border sticky top-0 z-50 md:hidden">
         <div className="px-4 flex items-center justify-between h-11">
-          <Link href="/" className="text-base font-bold text-accent">InvestBoard</Link>
+          <Link href="/forum" className="text-base font-bold text-accent">InvestBoard</Link>
           {!mounted ? null : user ? (
             <button onClick={logout} className="text-xs text-text-secondary">로그아웃</button>
           ) : (

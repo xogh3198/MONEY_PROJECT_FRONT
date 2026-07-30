@@ -1,9 +1,9 @@
 import Link from 'next/link';
 
 const LINKS = [
-  { href: '/briefing', label: '오늘의 브리핑' },
-  { href: '/guides', label: '금융 가이드' },
-  { href: '/methodology', label: '데이터·편집 원칙' },
+  { href: '/forum', label: '경제뉴스' },
+  { href: '/forum/community', label: '커뮤니티' },
+  { href: '/', label: '홍보지도' },
   { href: '/feed.xml', label: 'RSS' },
 ];
 

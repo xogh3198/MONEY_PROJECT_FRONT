@@ -1,10 +1,12 @@
-# InvestBoard 제품·수익화 전략
+# 홍보지도 제품·수익화 전략
 
-마지막 검증일: 2026-07-22
+마지막 검증일: 2026-07-30
+
+> 2026-07-30부터 홍보지도를 주 제품으로, InvestingBoard를 `/forum`의 금융 포럼·내부 콘텐츠 사례로 통합한다. 현재 제품 경계와 기술 구조는 [홍보지도 × InvestingBoard 통합 제품 기획](UNIFIED_PRODUCT.md)을 우선한다.
 
 ## 1. 목표
 
-InvestBoard의 목표는 단기 조회수 극대화가 아니라, 한국 개인 투자자가 반복 방문할 이유가 있는 신뢰도 높은 금융 정보 제품을 만들고 지속 가능한 양(+)의 공헌이익을 내는 것이다.
+홍보지도의 목표는 단기 영상 개수 극대화가 아니라, 소규모 사업자가 실제로 게시할 가치가 있는 홍보 계획과 영상을 더 적은 시간과 비용으로 만들고 지속 가능한 양(+)의 공헌이익을 내는 것이다.
 
 핵심 선순환은 다음과 같다.
 
@@ -161,4 +163,3 @@ InvestBoard는 속보 복제 서비스가 아니라 **데이터 기반 금융 �
 - [복제 콘텐츠 광고 정책](https://support.google.com/publisherpolicies/answer/11190248)
 - [Google 사람 중심 콘텐츠 가이드](https://developers.google.com/search/docs/fundamentals/creating-helpful-content)
 - [금융투자협회 불법 금융투자업 안내](https://www.kofia.or.kr/wpge/m_167/sub04070101.do)
-
