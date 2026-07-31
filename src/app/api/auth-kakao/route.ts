@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const ENGINE_API = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://13.124.149.70:8080';
+import { ENGINE_API_BASE as ENGINE_API } from '@/lib/server/api-base';
 const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID || process.env.KAKAO_REST_API_KEY || '';
 const KAKAO_CLIENT_SECRET = process.env.KAKAO_CLIENT_SECRET || '';
 const KAKAO_REDIRECT_URI = process.env.NEXT_PUBLIC_SITE_URL

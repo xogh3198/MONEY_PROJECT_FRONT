@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { fetchIndicators } from '@/lib/api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 interface Indicator { type: string; name: string; value: number; changePercent: number; prediction: string; updatedAt: string; }
 
@@ -12,6 +12,10 @@ export default function MarketPage() {
   const [selected, setSelected] = useState('KOSPI');
   const [history, setHistory] = useState<{date: string; value: number}[]>([]);
   const [interval, setInterval2] = useState('1d');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState('');
 
   const INTERVALS = [
     { key: '1m', label: '1분' },
@@ -32,23 +36,35 @@ export default function MarketPage() {
   }, [selected, interval]);
 
   const loadData = async () => {
+    setError('');
     try {
       const data = await fetchIndicators();
-      if (data?.length) {
-        const sorted = [...data].sort((a: Indicator, b: Indicator) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type));
-        setIndicators(sorted);
-      }
-    } catch {}
+      if (!Array.isArray(data) || data.length === 0) throw new Error('사용 가능한 시장 지표가 없습니다.');
+      const sorted = [...data].sort((a: Indicator, b: Indicator) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type));
+      setIndicators(sorted);
+    } catch (loadError) {
+      setIndicators([]);
+      setError(loadError instanceof Error ? loadError.message : '시장 지표를 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadHistory = async (type: string, intv: string) => {
+    setHistoryLoading(true);
+    setHistoryError('');
     try {
       const days = intv === '1m' ? 1 : intv === '5m' ? 5 : intv === '15m' ? 5 : intv === '1h' ? 7 : 30;
       const res = await fetch(`/api/market-history?type=${type}&days=${days}&interval=${intv}`);
       const data = await res.json();
-      if (data?.length) setHistory(data);
-      else setHistory([]);
-    } catch { setHistory([]); }
+      if (!res.ok) throw new Error(data?.error || '차트 데이터를 불러오지 못했습니다.');
+      setHistory(Array.isArray(data) ? data : []);
+    } catch (loadError) {
+      setHistory([]);
+      setHistoryError(loadError instanceof Error ? loadError.message : '차트 데이터를 불러오지 못했습니다.');
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   const selectedIndicator = indicators.find(i => i.type === selected);
@@ -56,12 +72,31 @@ export default function MarketPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-bold">📊 시장 지표 & 예측</h1>
-        <p className="text-xs text-text-secondary mt-1">실시간 시장 데이터 (1분 간격 갱신)</p>
+        <h1 className="text-xl font-bold">📊 시장 지표와 AI 해설</h1>
+        <p className="text-xs text-text-secondary mt-1">
+          Yahoo Finance 최근 수집값을 1분마다 갱신합니다. 거래소 공식 실시간 시세와 지연·차이가 있을 수 있습니다.
+        </p>
       </div>
 
       {/* 지표 카드 */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-6">
+      {loading ? (
+        <div className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="h-24 animate-pulse rounded-lg border border-border bg-card" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="mb-6 rounded-lg border border-negative/30 bg-negative/10 p-6 text-center">
+          <p className="text-sm text-negative">{error}</p>
+          <button
+            type="button"
+            onClick={loadData}
+            className="mt-4 rounded-lg border border-border bg-card px-4 py-2 text-sm hover:border-accent"
+          >
+            다시 연결
+          </button>
+        </div>
+      ) : <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
         {indicators.map(ind => {
           const isUp = ind.changePercent > 0;
           const isSelected = selected === ind.type;
@@ -80,7 +115,7 @@ export default function MarketPage() {
             </button>
           );
         })}
-      </div>
+      </div>}
 
       {/* 차트 */}
       <div className="bg-card border border-border rounded-lg p-5 mb-6">
@@ -113,7 +148,22 @@ export default function MarketPage() {
             </button>
           ))}
         </div>
-        {history.length > 0 ? (
+        {historyLoading ? (
+          <div className="h-[280px] flex items-center justify-center text-text-secondary text-sm animate-pulse">
+            차트 데이터를 불러오는 중입니다.
+          </div>
+        ) : historyError ? (
+          <div className="h-[280px] flex flex-col items-center justify-center text-center">
+            <p className="text-sm text-negative">{historyError}</p>
+            <button
+              type="button"
+              onClick={() => loadHistory(selected, interval)}
+              className="mt-4 rounded-lg border border-border px-4 py-2 text-sm hover:border-accent"
+            >
+              차트 다시 불러오기
+            </button>
+          </div>
+        ) : history.length > 0 ? (
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={history}>
               <defs>
@@ -138,7 +188,9 @@ export default function MarketPage() {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-[280px] flex items-center justify-center text-text-secondary text-sm">차트 데이터 로딩 중...</div>
+          <div className="h-[280px] flex items-center justify-center text-text-secondary text-sm">
+            이 기간에 표시할 차트 데이터가 없습니다.
+          </div>
         )}
       </div>
 
@@ -173,10 +225,12 @@ function AIPrediction() {
     try {
       const res = await fetch('/api/ai-prediction');
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'AI 분석을 불러올 수 없습니다.');
+      if (!data?.analysis) throw new Error('표시할 AI 분석 결과가 없습니다.');
       setAnalysis(data.analysis);
-      setUpdatedAt(data.updatedAt);
-    } catch {
-      setAnalysis('AI 분석을 불러올 수 없습니다.');
+      setUpdatedAt(data.updatedAt || '');
+    } catch (predictionError) {
+      setAnalysis(predictionError instanceof Error ? predictionError.message : 'AI 분석을 불러올 수 없습니다.');
     } finally {
       setLoading(false);
     }

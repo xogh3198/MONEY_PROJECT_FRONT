@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateGeminiText } from '@/lib/server/gemini';
-
-const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8083';
+import { NEWS_API_BASE as NEWS_API } from '@/lib/server/api-base';
 
 export const dynamic = 'force-dynamic'; // 빌드 시 호출 방지
 

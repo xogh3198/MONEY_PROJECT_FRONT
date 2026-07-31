@@ -1,103 +1,42 @@
-'use client';
-import { useState } from 'react';
-
-interface EconomicEvent {
-  date: string;
-  time: string;
-  title: string;
-  country: string;
-  importance: 'high' | 'medium' | 'low';
-  category: string;
-}
-
-const EVENTS: EconomicEvent[] = [
-  { date: '2026-06-18', time: '09:00', title: '한국 금통위 의사록 공개', country: '🇰🇷', importance: 'high', category: '금리' },
-  { date: '2026-06-19', time: '21:30', title: '미국 주간 실업수당 청구건수', country: '🇺🇸', importance: 'medium', category: '고용' },
-  { date: '2026-06-20', time: '08:00', title: '한국 생산자물가지수 (5월)', country: '🇰🇷', importance: 'medium', category: '물가' },
-  { date: '2026-06-24', time: '15:00', title: '독일 IFO 기업환경지수', country: '🇩🇪', importance: 'medium', category: '경기' },
-  { date: '2026-06-25', time: '09:00', title: '삼성전자 배당락일', country: '🇰🇷', importance: 'high', category: '배당' },
-  { date: '2026-06-25', time: '09:00', title: 'SK하이닉스 배당락일', country: '🇰🇷', importance: 'high', category: '배당' },
-  { date: '2026-06-26', time: '21:30', title: '미국 PCE 물가지수 (5월)', country: '🇺🇸', importance: 'high', category: '물가' },
-  { date: '2026-06-26', time: '21:30', title: '미국 GDP 확정치 (1Q)', country: '🇺🇸', importance: 'high', category: '경기' },
-  { date: '2026-06-27', time: '08:00', title: '한국 소비자심리지수 (6월)', country: '🇰🇷', importance: 'low', category: '경기' },
-  { date: '2026-07-02', time: '03:00', title: 'FOMC 의사록 공개', country: '🇺🇸', importance: 'high', category: '금리' },
-  { date: '2026-07-03', time: '21:30', title: '미국 비농업 고용 (6월)', country: '🇺🇸', importance: 'high', category: '고용' },
-  { date: '2026-07-10', time: '09:00', title: '한국 금통위 기준금리 결정', country: '🇰🇷', importance: 'high', category: '금리' },
-  { date: '2026-07-15', time: '삼성전자', title: '삼성전자 2Q 잠정실적 발표', country: '🇰🇷', importance: 'high', category: '실적' },
-  { date: '2026-07-30', time: '03:00', title: 'FOMC 금리 결정', country: '🇺🇸', importance: 'high', category: '금리' },
-];
+import Link from 'next/link';
 
 export default function CalendarPage() {
-  const [filter, setFilter] = useState<string>('all');
-
-  const filtered = filter === 'all' ? EVENTS : EVENTS.filter(e => e.category === filter);
-  const categories = ['all', '금리', '물가', '고용', '경기', '배당', '실적'];
-
-  // 날짜별 그룹핑
-  const grouped = filtered.reduce<Record<string, EconomicEvent[]>>((acc, event) => {
-    if (!acc[event.date]) acc[event.date] = [];
-    acc[event.date].push(event);
-    return acc;
-  }, {});
-
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold">📅 경제 캘린더</h1>
-        <p className="text-xs text-text-secondary mt-1">주요 경제 이벤트와 배당락일 일정</p>
+    <div className="mx-auto max-w-3xl">
+      <header className="mb-6">
+        <p className="text-xs font-semibold tracking-[0.16em] text-accent">DATA CONNECTION STATUS</p>
+        <h1 className="mt-2 text-2xl font-bold">경제 캘린더 연동 준비 중</h1>
+        <p className="mt-2 text-sm leading-6 text-text-secondary">
+          이전 화면의 고정 일정은 실제 API 데이터가 아니어서 제거했습니다. 공식 발표 일정과
+          갱신 시각을 검증할 수 있는 연동이 준비된 뒤 다시 제공합니다.
+        </p>
+      </header>
+
+      <section className="rounded-xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[#d29922]" aria-hidden="true" />
+          <div>
+            <h2 className="font-bold">현재 상태: API 미연동</h2>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">
+              날짜가 지난 FOMC·금통위·배당락일을 최신 일정처럼 표시하지 않습니다.
+              출처, 기준 시간대, 마지막 갱신 시각을 함께 제공할 수 있을 때 운영 기능으로 전환합니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Link href="/briefing" className="rounded-xl border border-border bg-card p-5 transition hover:border-accent/50">
+          <span className="text-xs text-accent">매일 갱신</span>
+          <h2 className="mt-2 font-bold">오늘의 브리핑</h2>
+          <p className="mt-2 text-xs leading-5 text-text-secondary">현재 수집된 뉴스와 시장 지표로 오늘의 핵심 이슈를 확인합니다.</p>
+        </Link>
+        <Link href="/market" className="rounded-xl border border-border bg-card p-5 transition hover:border-accent/50">
+          <span className="text-xs text-accent-blue">API 연결됨</span>
+          <h2 className="mt-2 font-bold">시장 지표</h2>
+          <p className="mt-2 text-xs leading-5 text-text-secondary">최근 수집된 코스피·환율·미국시장·원자재 값을 확인합니다.</p>
+        </Link>
       </div>
-
-      {/* 카테고리 필터 */}
-      <div className="flex gap-1 mb-5 overflow-x-auto pb-1">
-        {categories.map(cat => (
-          <button key={cat} onClick={() => setFilter(cat)}
-            className={`px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition ${
-              filter === cat ? 'bg-accent text-black' : 'bg-card border border-border text-text-secondary hover:text-text-primary'
-            }`}>
-            {cat === 'all' ? '전체' : cat}
-          </button>
-        ))}
-      </div>
-
-      {/* 이벤트 타임라인 */}
-      <div className="space-y-4">
-        {Object.entries(grouped).map(([date, events]) => {
-          const d = new Date(date);
-          const isToday = new Date().toDateString() === d.toDateString();
-          const dayName = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
-
-          return (
-            <div key={date} className="bg-card rounded-lg border border-border overflow-hidden">
-              <div className={`px-4 py-2 border-b border-border flex items-center gap-2 ${isToday ? 'bg-accent/10' : ''}`}>
-                <span className={`text-sm font-bold ${isToday ? 'text-accent' : 'text-text-primary'}`}>
-                  {date.substring(5)} ({dayName})
-                </span>
-                {isToday && <span className="text-[10px] px-2 py-0.5 bg-accent text-black rounded font-medium">오늘</span>}
-              </div>
-              <div className="divide-y divide-border/30">
-                {events.map((event, i) => (
-                  <div key={i} className="px-4 py-3 flex items-center gap-3">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      event.importance === 'high' ? 'bg-[#f85149]' :
-                      event.importance === 'medium' ? 'bg-[#d29922]' : 'bg-text-secondary'
-                    }`} />
-                    <span className="text-lg">{event.country}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium text-text-primary">{event.title}</p>
-                      <span className="text-[11px] text-text-secondary">{event.time}</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-border/50 text-text-secondary">{event.category}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <p className="text-center text-[11px] text-text-secondary mt-8">
-        ※ 일정은 변경될 수 있습니다. 공식 발표를 확인하세요.
-      </p>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8083';
+import { NEWS_API_BASE, requireApiBase } from '@/lib/server/api-base';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +7,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const params = searchParams.toString();
   try {
-    const res = await fetch(`${NEWS_API}/api/forum/posts/popular${params ? `?${params}` : ''}`, {
+    const newsApi = requireApiBase(NEWS_API_BASE, 'NEWS_API_URL');
+    const res = await fetch(`${newsApi}/api/forum/posts/popular${params ? `?${params}` : ''}`, {
       headers: { 'Content-Type': 'application/json' },
     });
     const data = await res.json();

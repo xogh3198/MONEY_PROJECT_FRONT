@@ -25,6 +25,7 @@ export default function ForumPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setPage(0);
@@ -44,18 +45,22 @@ export default function ForumPage() {
 
   const loadArticles = async (pageNum: number) => {
     setLoading(true);
+    setError('');
     try {
       if (tab === 'hot') {
         const params = category !== 'ALL' ? `?category=${category}` : '';
         const res = await fetch(`/api/news-hot${params}`);
         const data = await res.json();
-        setArticles(data || []);
+        if (!res.ok) throw new Error(data?.error || '인기 뉴스를 불러오지 못했습니다.');
+        if (!Array.isArray(data)) throw new Error('인기 뉴스 응답 형식이 올바르지 않습니다.');
+        setArticles(data);
         setHasMore(false); // hot은 최대 10개
       } else {
         const params = new URLSearchParams({ page: String(pageNum), size: '10', sort: 'publishedAt,desc' });
         if (category !== 'ALL') params.set('category', category);
         const res = await fetch(`/api/news-list?${params}`);
         const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || '실시간 뉴스를 불러오지 못했습니다.');
         if (pageNum === 0) {
           setArticles(data?.content || []);
         } else {
@@ -63,8 +68,10 @@ export default function ForumPage() {
         }
         setHasMore(!data?.last);
       }
-    } catch {
+      setLastUpdate(new Date());
+    } catch (loadError) {
       if (pageNum === 0) setArticles([]);
+      setError(loadError instanceof Error ? loadError.message : '뉴스를 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }
@@ -87,6 +94,9 @@ export default function ForumPage() {
             <span className="text-[10px] text-accent animate-pulse">● LIVE</span>
           )}
         </div>
+        <p className="mt-2 text-[10px] text-text-secondary">
+          최근 연결 확인 {lastUpdate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+        </p>
       </div>
 
       {/* 인기/실시간 탭 */}
@@ -122,8 +132,21 @@ export default function ForumPage() {
       {/* 기사 목록 */}
       {loading && articles.length === 0 ? (
         <div className="text-center py-12 text-text-secondary text-sm animate-pulse">불러오는 중...</div>
+      ) : error ? (
+        <div className="rounded-lg border border-negative/30 bg-negative/10 px-5 py-10 text-center">
+          <p className="text-sm text-negative">{error}</p>
+          <button
+            type="button"
+            onClick={() => loadArticles(0)}
+            className="mt-4 rounded-lg border border-border bg-card px-4 py-2 text-sm hover:border-accent"
+          >
+            다시 연결
+          </button>
+        </div>
       ) : articles.length === 0 ? (
-        <div className="text-center py-12 text-text-secondary text-sm">뉴스가 없습니다</div>
+        <div className="text-center py-12 text-text-secondary text-sm">
+          이 조건에 맞는 뉴스가 아직 없습니다.
+        </div>
       ) : (
         <div className="bg-card rounded-lg border border-border overflow-hidden divide-y divide-border/50">
           {articles.map((article, idx) => (

@@ -7,9 +7,9 @@ import TrackedLink from '@/components/analytics/TrackedLink';
 import { CATEGORY_LABELS, NewsArticle } from '@/lib/news';
 import { rankNewsForBriefing } from '@/lib/news-ranking';
 import InterestTopicSelector from '@/components/InterestTopicSelector';
+import { NEWS_API_BASE as NEWS_API } from '@/lib/server/api-base';
 
 const SITE_URL = 'https://investboard.cloud';
-const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8083';
 
 export const dynamic = 'force-dynamic';
 

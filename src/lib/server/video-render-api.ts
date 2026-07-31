@@ -1,10 +1,10 @@
-const DEFAULT_NEWS_API = 'http://13.125.169.237:8083';
+import { NEWS_API_BASE } from '@/lib/server/api-base';
 
 export function videoRenderApiConfig(): { baseUrl: string; accessKey: string } {
   const baseUrl = (
     process.env.VIDEO_RENDER_API_URL
-    || process.env.NEXT_PUBLIC_NEWS_API_URL
-    || DEFAULT_NEWS_API
+    || process.env.NEWS_API_URL
+    || NEWS_API_BASE
   ).replace(/\/+$/, '');
   const accessKey = (
     process.env.VIDEO_RENDER_ACCESS_KEY

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeContentStudio } from '@/lib/server/content-studio-auth';
-
-const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || 'http://13.124.149.70:8083';
+import { NEWS_API_BASE as NEWS_API } from '@/lib/server/api-base';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

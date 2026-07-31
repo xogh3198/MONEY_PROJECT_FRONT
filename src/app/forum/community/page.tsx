@@ -15,6 +15,7 @@ export default function CommunityListPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setPage(0);
@@ -24,11 +25,13 @@ export default function CommunityListPage() {
 
   const loadPosts = async (pageNum: number) => {
     setLoading(true);
+    setError('');
     try {
       if (sort === 'popular') {
         const params = category !== 'ALL' ? `?category=${category}` : '';
         const res = await fetch(`/api/forum/posts/popular${params}`);
         const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || '인기 게시글을 불러오지 못했습니다.');
         const items = Array.isArray(data) ? data.map((d: any) => d.post || d) : [];
         setPosts(items);
         setHasMore(false);
@@ -37,12 +40,16 @@ export default function CommunityListPage() {
         if (category !== 'ALL') params.set('category', category);
         const res = await fetch(`/api/forum/posts?${params}`);
         const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || '게시글을 불러오지 못했습니다.');
         const content = data?.content || [];
         if (pageNum === 0) setPosts(content);
         else setPosts((prev) => [...prev, ...content]);
         setHasMore(!data?.last);
       }
-    } catch { if (pageNum === 0) setPosts([]); }
+    } catch (loadError) {
+      if (pageNum === 0) setPosts([]);
+      setError(loadError instanceof Error ? loadError.message : '게시글을 불러오지 못했습니다.');
+    }
     finally { setLoading(false); }
   };
 
@@ -80,8 +87,29 @@ export default function CommunityListPage() {
       {/* Post list */}
       {loading && posts.length === 0 ? (
         <PostListSkeleton />
+      ) : error ? (
+        <div className="rounded-lg border border-negative/30 bg-negative/10 px-5 py-10 text-center">
+          <p className="text-sm text-negative">{error}</p>
+          <button
+            type="button"
+            onClick={() => loadPosts(0)}
+            className="mt-4 rounded-lg border border-border bg-card px-4 py-2 text-sm hover:border-accent"
+          >
+            다시 연결
+          </button>
+        </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-12 text-text-secondary text-sm">게시글이 없습니다</div>
+        <div className="rounded-lg border border-border bg-card px-5 py-12 text-center">
+          <p className="text-sm font-medium text-text-primary">아직 첫 토론이 시작되지 않았습니다.</p>
+          <p className="mt-2 text-xs text-text-secondary">API는 정상 연결되어 있습니다. 궁금한 시장 이슈로 첫 글을 남겨보세요.</p>
+          <button
+            type="button"
+            onClick={handleWrite}
+            className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-black"
+          >
+            첫 글 작성하기
+          </button>
+        </div>
       ) : (
         <div className="bg-card rounded-lg border border-border overflow-hidden divide-y divide-border/50">
           {posts.map((post) => <PostCard key={post.id} post={post} />)}
