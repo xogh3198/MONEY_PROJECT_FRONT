@@ -1,8 +1,68 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
+
+const homeStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://investboard.cloud/#organization',
+      name: 'InvestBoard',
+      alternateName: '인베스트보드',
+      url: 'https://investboard.cloud/',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://investboard.cloud/icon.png',
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://investboard.cloud/#website',
+      url: 'https://investboard.cloud/',
+      name: 'InvestBoard',
+      alternateName: ['인베스트보드', 'Invest Board'],
+      inLanguage: 'ko-KR',
+      publisher: { '@id': 'https://investboard.cloud/#organization' },
+    },
+    {
+      '@type': 'WebPage',
+      '@id': 'https://investboard.cloud/#webpage',
+      url: 'https://investboard.cloud/',
+      name: 'InvestBoard | 금융 정보와 홍보 실행을 연결하는 플랫폼',
+      description:
+        '금융 정보와 토론을 제공하는 InvestingBoard와 홍보 계획·AI 영상 초안을 만드는 마케팅맵의 통합 홈입니다.',
+      isPartOf: { '@id': 'https://investboard.cloud/#website' },
+      about: { '@id': 'https://investboard.cloud/#organization' },
+      hasPart: [
+        {
+          '@type': 'WebPage',
+          name: 'InvestingBoard | 금융 뉴스·시장 데이터·투자 커뮤니티',
+          url: 'https://investboard.cloud/forum',
+        },
+        {
+          '@type': 'WebPage',
+          name: '마케팅맵 | URL로 만드는 홍보 계획·AI 영상',
+          url: 'https://investboard.cloud/promotion-map',
+        },
+      ],
+      inLanguage: 'ko-KR',
+    },
+  ],
+};
 
 export default function HomePage() {
   return (
     <main className="hub-root">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(homeStructuredData).replace(/</g, '\\u003c'),
+        }}
+      />
       <header className="hub-header">
         <Link className="hub-brand" href="/" aria-label="InvestBoard 홈">
           <span className="hub-brand-mark" aria-hidden="true">I</span>
@@ -26,10 +86,10 @@ export default function HomePage() {
       <section className="hub-hero">
         <div className="hub-hero-copy">
           <p className="hub-kicker">ONE BOARD, TWO WAYS FORWARD</p>
-          <h1>정보를 읽고,<br /><em>다음 행동</em>을 설계합니다.</h1>
+          <h1>금융 정보를 읽고,<br /><em>홍보 실행</em>을 설계합니다.</h1>
           <p className="hub-lead">
-            InvestBoard는 금융 이슈를 이해하고 토론하는 공간과, 내 서비스의 홍보 경로와
-            영상을 설계하는 도구를 한곳에 연결합니다.
+            InvestBoard 통합 홈에서 금융 이슈를 이해하고 토론하는 InvestingBoard와,
+            내 서비스의 홍보 경로와 영상을 설계하는 마케팅맵을 목적에 따라 이용하세요.
           </p>
           <div className="hub-actions">
             <Link

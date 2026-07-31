@@ -8,15 +8,20 @@ import PageViewTracker from '@/components/analytics/PageViewTracker';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://investboard.cloud'),
-  title: { default: 'InvestBoard | 정보에서 실행까지', template: '%s | InvestBoard' },
-  description: '금융 뉴스·토론 InvestingBoard와 홍보 계획·영상 제작 마케팅맵을 한곳에서 이용하세요.',
+  title: {
+    default: 'InvestBoard | 금융 정보와 홍보 실행을 연결하는 플랫폼',
+    template: '%s | InvestBoard',
+  },
+  description:
+    '금융 뉴스·시장 데이터를 이해하고 토론하는 InvestingBoard와 URL·상품·매장으로 홍보 계획과 AI 영상 초안을 만드는 마케팅맵을 한곳에서 이용하세요.',
   keywords: ['금융 뉴스', '투자 커뮤니티', '홍보 계획', '마케팅 채널', '홍보 영상', 'AI 영상'],
   authors: [{ name: 'InvestBoard', url: 'https://investboard.cloud' }],
   creator: 'InvestBoard',
   publisher: 'InvestBoard',
   openGraph: {
-    title: 'InvestBoard | 정보에서 실행까지',
-    description: '금융 이슈를 읽고 토론하거나, 내 서비스의 홍보 경로와 영상을 설계하세요.',
+    title: 'InvestBoard | 금융 정보와 홍보 실행을 연결하는 플랫폼',
+    description:
+      '금융 이슈를 읽고 토론하는 InvestingBoard와 내 서비스의 홍보 계획·AI 영상 초안을 만드는 마케팅맵을 이용하세요.',
     url: 'https://investboard.cloud',
     siteName: 'InvestBoard',
     type: 'website',
@@ -25,8 +30,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'InvestBoard | 정보에서 실행까지',
-    description: '금융 뉴스·토론과 홍보 계획·영상 제작을 목적에 따라 이용하세요.',
+    title: 'InvestBoard | 금융 정보와 홍보 실행을 연결하는 플랫폼',
+    description: 'InvestingBoard 금융 뉴스·토론과 마케팅맵 홍보 계획·AI 영상을 목적에 따라 이용하세요.',
     images: ['/opengraph-image.png'],
   },
   robots: {

@@ -3,9 +3,13 @@
 코드·배포 검증이 끝난 뒤 외부 계정이나 약관 동의가 필요한 작업만 모은다.
 
 - Google Search Console에 `investboard.cloud` 등록·소유권 확인·사이트맵 제출
-- Search Console URL 검사에서 `/`, `/briefing`, `/guides`와 대표 가이드 3개 색인 요청 후
-  1~2주 뒤 색인·노출 확인
+- Search Console URL 검사에서 `/`, `/forum`, `/promotion-map`, `/briefing`, `/guides`와
+  대표 가이드 3개 색인 요청 후 1~2주 뒤 색인·노출 확인
+- Google의 기존 `/search` 검색 결과는 해당 URL을 다시 검사해 `색인 생성 요청`으로
+  `noindex` 재수집을 유도하고, 긴급 제거 도구는 실제 민감 정보 노출이 있을 때만 사용
 - 네이버 서치어드바이저에 도메인 등록·소유권 확인·`/sitemap.xml`, `/feed.xml` 제출
+- 네이버 웹 페이지 수집 요청에 `/`, `/forum`, `/promotion-map`을 각각 제출하고
+  사이트 진단에서 제목·설명·수집 상태 확인
 - 네이버 개발자센터의 기존 애플리케이션에 `데이터랩(검색어트렌드)` 사용 권한 확인
 - YouTube 공개 영상 반응을 사용할 경우 Google Cloud에서 YouTube Data API 활성화 후 `YOUTUBE_API_KEY` 등록
 - YouTube·Instagram 계정 생성과 플랫폼 약관 승인
