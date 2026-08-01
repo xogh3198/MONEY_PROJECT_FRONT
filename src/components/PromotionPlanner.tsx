@@ -127,6 +127,35 @@ export default function PromotionPlanner() {
       const nextPlan = await createPromotionPlan(brief);
       setPlan(nextPlan);
       setStage("result");
+
+      if (analysis) {
+        const references = [
+          url.trim(),
+          analysis.canonicalUrl,
+          ...referenceLinks.split(/\r?\n/).map(item => item.trim()),
+        ].filter((value, index, values) => Boolean(value) && values.indexOf(value) === index);
+        const facts = analysis.evidence.map(item => `${item.label}: ${item.value}`);
+        const videoInput: PromotionVideoInput = {
+          sourceType,
+          title: sourceTitle.trim() || analysis.title,
+          description: [
+            description.trim() || analysis.sourceSummary,
+            `홍보 계획: ${nextPlan.strategySummary}`,
+          ].filter(Boolean).join('\n\n'),
+          sourceUrl: url.trim() || analysis.canonicalUrl || undefined,
+          referenceLinks: references,
+          targetAudience,
+          goal,
+          callToAction: analysis.primaryCtas[0] || goalCallToAction(goal),
+          verifiedFacts: facts,
+          ownedAssetNotes: '',
+        };
+        sessionStorage.setItem(VIDEO_HANDOFF_STORAGE, JSON.stringify({
+          input: videoInput,
+          planId: nextPlan.planId,
+        }));
+      }
+
       trackGrowthEvent("promotion_plan_created", {
         source_type: sourceType,
         goal,
