@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ContentScriptDraft, VideoRenderQuality } from '@/lib/content-studio';
+import {
+  ContentScriptDraft,
+  VideoRenderQuality,
+  VideoVoiceStyle,
+} from '@/lib/content-studio';
 import { authorizeContentStudio } from '@/lib/server/content-studio-auth';
 import { fetchVideoRenderApi, readApiError } from '@/lib/server/video-render-api';
 
@@ -14,9 +18,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as {
       draft?: ContentScriptDraft;
       quality?: VideoRenderQuality;
+      voiceStyle?: VideoVoiceStyle;
+      sceneAssets?: Record<string, string>;
     };
     const draft = body.draft;
     const quality = body.quality === 'FINAL' ? 'FINAL' : 'PREVIEW';
+    const voiceStyle: VideoVoiceStyle = ['WHISPER', 'SNARKY'].includes(body.voiceStyle || '')
+      ? body.voiceStyle as VideoVoiceStyle
+      : 'NATURAL';
     if (!draft?.experimentId || !draft.title || draft.scenes?.length !== 7) {
       return NextResponse.json({ error: '검수할 7장면 대본이 필요합니다.' }, { status: 400 });
     }
@@ -32,9 +41,11 @@ export async function POST(request: NextRequest) {
           onScreenText: scene.onScreenText,
           visualDirection: scene.visualDirection,
           visualSearchTerms: scene.visualSearchTerms,
+          assetRef: body.sceneAssets?.[String(scene.order)] || null,
         })),
         disclaimer: draft.disclaimer,
         aiDisclosure: draft.aiDisclosure,
+        voiceStyle,
         quality,
       }),
       signal: AbortSignal.timeout(40_000),

@@ -5,8 +5,11 @@ import { FormEvent, useEffect, useState } from 'react';
 import {
   ContentScriptDraft,
   PromotionVideoInput,
+  UploadedSceneAsset,
+  VideoRenderCapabilities,
   VideoRenderJob,
   VideoRenderQuality,
+  VideoVoiceStyle,
 } from '@/lib/content-studio';
 import { trackGrowthEvent } from '@/lib/growth-analytics';
 import StudioOperationsPanel from '@/components/StudioOperationsPanel';
@@ -14,6 +17,16 @@ import StudioOperationsPanel from '@/components/StudioOperationsPanel';
 const ACCESS_KEY_STORAGE = 'promotion_map_studio_key';
 const DRAFT_STORAGE = 'promotion_map_video_draft_v1';
 const VIDEO_HANDOFF_STORAGE = 'promotion_map_video_handoff_v1';
+
+const voiceStyles: Array<{
+  value: VideoVoiceStyle;
+  label: string;
+  description: string;
+}> = [
+  { value: 'NATURAL', label: '자연스러운 설명', description: '문맥에 맞는 담백한 전달' },
+  { value: 'WHISPER', label: '낮은 속삭임', description: '궁금증을 남기는 가까운 톤' },
+  { value: 'SNARKY', label: '시니컬 한마디', description: '조금 투덜대지만 빠르고 또렷한 톤' },
+];
 
 const sourceTypes: Array<{ value: PromotionVideoInput['sourceType']; label: string }> = [
   { value: 'URL', label: '웹사이트·링크' },
@@ -46,6 +59,10 @@ export default function PromotionVideoStudio() {
   const [draft, setDraft] = useState<ContentScriptDraft | null>(null);
   const [approved, setApproved] = useState(false);
   const [job, setJob] = useState<VideoRenderJob | null>(null);
+  const [capabilities, setCapabilities] = useState<VideoRenderCapabilities | null>(null);
+  const [voiceStyle, setVoiceStyle] = useState<VideoVoiceStyle>('NATURAL');
+  const [sceneAssets, setSceneAssets] = useState<Record<number, UploadedSceneAsset>>({});
+  const [assetUploading, setAssetUploading] = useState<number | null>(null);
   const [videoUrl, setVideoUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
@@ -90,6 +107,26 @@ export default function PromotionVideoStudio() {
     if (videoUrl) URL.revokeObjectURL(videoUrl);
   }, [videoUrl]);
 
+  useEffect(() => {
+    if (!accessKey) return;
+    let cancelled = false;
+    fetch('/api/content-studio/capabilities', {
+      cache: 'no-store',
+      headers: { 'x-content-studio-key': accessKey },
+    })
+      .then(async response => {
+        if (!response.ok) throw new Error('영상 기능 상태 조회 실패');
+        return response.json() as Promise<VideoRenderCapabilities>;
+      })
+      .then(data => {
+        if (!cancelled) setCapabilities(data);
+      })
+      .catch(() => {
+        if (!cancelled) setCapabilities(null);
+      });
+    return () => { cancelled = true; };
+  }, [accessKey]);
+
   const authenticate = (event: FormEvent) => {
     event.preventDefault();
     const key = keyInput.trim();
@@ -109,6 +146,10 @@ export default function PromotionVideoStudio() {
     setApproved(false);
     setJob(null);
     setVideoUrl('');
+    Object.values(sceneAssets).forEach(asset => {
+      if (asset.previewUrl) URL.revokeObjectURL(asset.previewUrl);
+    });
+    setSceneAssets({});
 
     try {
       const payload: PromotionVideoInput = {
@@ -157,7 +198,14 @@ export default function PromotionVideoStudio() {
           'Content-Type': 'application/json',
           'x-content-studio-key': accessKey,
         },
-        body: JSON.stringify({ draft, quality }),
+        body: JSON.stringify({
+          draft,
+          quality,
+          voiceStyle,
+          sceneAssets: Object.fromEntries(
+            Object.entries(sceneAssets).map(([order, asset]) => [order, asset.assetRef]),
+          ),
+        }),
       });
       const submitted = await submitResponse.json();
       if (!submitResponse.ok) throw new Error(submitted.error || '영상 렌더를 시작하지 못했습니다.');
@@ -193,6 +241,41 @@ export default function PromotionVideoStudio() {
       setError(cause instanceof Error ? cause.message : '영상 렌더에 실패했습니다.');
     } finally {
       setVideoLoading(false);
+    }
+  };
+
+  const uploadSceneAsset = async (sceneOrder: number, file: File) => {
+    if (file.size > 4 * 1024 * 1024) {
+      setError('장면 파일은 4MB 이하여야 합니다. 긴 영상은 장면별 5~6초로 잘라 압축해 주세요.');
+      return;
+    }
+    setAssetUploading(sceneOrder);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.set('file', file, file.name);
+      const response = await fetch('/api/content-studio/assets', {
+        method: 'POST',
+        headers: { 'x-content-studio-key': accessKey },
+        body: formData,
+      });
+      const data = await response.json() as UploadedSceneAsset & { error?: string };
+      if (!response.ok) throw new Error(data.error || '장면 파일을 업로드하지 못했습니다.');
+      setSceneAssets(current => {
+        const previous = current[sceneOrder];
+        if (previous?.previewUrl) URL.revokeObjectURL(previous.previewUrl);
+        return {
+          ...current,
+          [sceneOrder]: {
+            ...data,
+            previewUrl: URL.createObjectURL(file),
+          },
+        };
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '장면 파일을 업로드하지 못했습니다.');
+    } finally {
+      setAssetUploading(null);
     }
   };
 
@@ -322,7 +405,13 @@ export default function PromotionVideoStudio() {
                 job={job}
                 videoUrl={videoUrl}
                 videoLoading={videoLoading}
+                capabilities={capabilities}
+                voiceStyle={voiceStyle}
+                sceneAssets={sceneAssets}
+                assetUploading={assetUploading}
                 onApprove={setApproved}
+                onVoiceStyle={setVoiceStyle}
+                onUploadAsset={uploadSceneAsset}
                 onRender={renderVideo}
               />
             )}
@@ -340,7 +429,13 @@ function DraftResult({
   job,
   videoUrl,
   videoLoading,
+  capabilities,
+  voiceStyle,
+  sceneAssets,
+  assetUploading,
   onApprove,
+  onVoiceStyle,
+  onUploadAsset,
   onRender,
 }: {
   draft: ContentScriptDraft;
@@ -348,7 +443,13 @@ function DraftResult({
   job: VideoRenderJob | null;
   videoUrl: string;
   videoLoading: boolean;
+  capabilities: VideoRenderCapabilities | null;
+  voiceStyle: VideoVoiceStyle;
+  sceneAssets: Record<number, UploadedSceneAsset>;
+  assetUploading: number | null;
   onApprove: (approved: boolean) => void;
+  onVoiceStyle: (style: VideoVoiceStyle) => void;
+  onUploadAsset: (sceneOrder: number, file: File) => void;
   onRender: (quality: VideoRenderQuality) => void;
 }) {
   return (
@@ -365,8 +466,63 @@ function DraftResult({
             <h4>{scene.onScreenText}</h4>
             <p>{scene.narration}</p>
             <small>화면: {scene.visualDirection}</small>
+            <div className="studio-scene-asset">
+              {sceneAssets[scene.order]?.previewUrl && sceneAssets[scene.order].mediaKind === 'IMAGE' && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={sceneAssets[scene.order].previewUrl} alt={`장면 ${scene.order} 업로드 미리보기`} />
+              )}
+              {sceneAssets[scene.order]?.previewUrl && sceneAssets[scene.order].mediaKind === 'VIDEO' && (
+                <video muted playsInline src={sceneAssets[scene.order].previewUrl} />
+              )}
+              <label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                  disabled={assetUploading !== null}
+                  onChange={event => {
+                    const file = event.target.files?.[0];
+                    if (file) onUploadAsset(scene.order, file);
+                    event.target.value = '';
+                  }}
+                />
+                {assetUploading === scene.order
+                  ? '업로드 중…'
+                  : sceneAssets[scene.order]
+                    ? `${sceneAssets[scene.order].fileName} 교체`
+                    : '내 사진·영상 넣기'}
+              </label>
+            </div>
           </article>
         ))}
+      </div>
+      <div className="studio-voice-style">
+        <div>
+          <h3>내레이션 캐릭터</h3>
+          <p>
+            현재 공급자: <b>{capabilities?.selectedVoiceProvider || '확인 중'}</b>
+            {!capabilities?.pixabayConfigured && ' · 스톡 이미지 키 미설정'}
+          </p>
+        </div>
+        <div className="studio-voice-options">
+          {voiceStyles.map(option => {
+            const supported = option.value === 'NATURAL'
+              || capabilities?.supportedVoiceStyles?.includes(option.value);
+            return (
+              <label className={voiceStyle === option.value ? 'active' : ''} key={option.value}>
+                <input
+                  type="radio"
+                  name="voice-style"
+                  value={option.value}
+                  checked={voiceStyle === option.value}
+                  disabled={!supported}
+                  onChange={() => onVoiceStyle(option.value)}
+                />
+                <strong>{option.label}</strong>
+                <small>{supported ? option.description : 'ElevenLabs·Typecast 설정 후 사용 가능'}</small>
+              </label>
+            );
+          })}
+        </div>
       </div>
       <div className="studio-review">
         <h3>게시 전 확인</h3>
@@ -375,7 +531,7 @@ function DraftResult({
         <p><b>고지</b> {draft.disclaimer} {draft.aiDisclosure}</p>
         <label>
           <input type="checkbox" checked={approved} onChange={event => onApprove(event.target.checked)} />
-          사실, 표현, 이미지 사용권을 확인했고 미리보기 렌더를 승인합니다.
+          사실, 표현, 이미지·영상 사용권을 확인했고 미리보기 렌더를 승인합니다.
         </label>
       </div>
       <div className="studio-render">

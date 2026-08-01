@@ -88,6 +88,24 @@ export interface PromotionVideoInput {
 
 export type VideoRenderQuality = 'PREVIEW' | 'FINAL';
 export type VideoRenderStatus = 'QUEUED' | 'RENDERING' | 'COMPLETED' | 'FAILED';
+export type VideoVoiceStyle = 'NATURAL' | 'WHISPER' | 'SNARKY';
+
+export interface UploadedSceneAsset {
+  assetRef: string;
+  mediaKind: 'IMAGE' | 'VIDEO';
+  contentType: string;
+  fileName: string;
+  previewUrl?: string;
+}
+
+export interface VideoRenderCapabilities {
+  selectedVoiceProvider: string;
+  voiceConfigured: boolean;
+  availableVoiceProviders: string[];
+  supportedVoiceStyles: VideoVoiceStyle[];
+  pixabayConfigured: boolean;
+  ownedMediaUpload: boolean;
+}
 
 export interface VideoRenderJob {
   id: string;
