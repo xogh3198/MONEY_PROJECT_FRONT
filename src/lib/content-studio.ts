@@ -98,11 +98,28 @@ export interface UploadedSceneAsset {
   previewUrl?: string;
 }
 
+export interface VoiceOption {
+  id: string;
+  name: string;
+  gender: string;
+  description: string;
+  styles: VideoVoiceStyle[];
+}
+
+export interface VoiceCatalogEntry {
+  id: string;
+  name: string;
+  tier: 'FREE' | 'PREMIUM';
+  configured: boolean;
+  voices: VoiceOption[];
+}
+
 export interface VideoRenderCapabilities {
   selectedVoiceProvider: string;
   voiceConfigured: boolean;
   availableVoiceProviders: string[];
   supportedVoiceStyles: VideoVoiceStyle[];
+  voiceCatalog?: VoiceCatalogEntry[];
   pixabayConfigured: boolean;
   ownedMediaUpload: boolean;
 }

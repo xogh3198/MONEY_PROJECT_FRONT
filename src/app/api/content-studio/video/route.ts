@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
       draft?: ContentScriptDraft;
       quality?: VideoRenderQuality;
       voiceStyle?: VideoVoiceStyle;
+      voiceProvider?: string;
+      voiceId?: string;
       sceneAssets?: Record<string, string>;
     };
     const draft = body.draft;
@@ -45,6 +47,8 @@ export async function POST(request: NextRequest) {
         })),
         disclaimer: draft.disclaimer,
         aiDisclosure: draft.aiDisclosure,
+        voiceProvider: body.voiceProvider || null,
+        voiceId: body.voiceId || null,
         voiceStyle,
         quality,
       }),

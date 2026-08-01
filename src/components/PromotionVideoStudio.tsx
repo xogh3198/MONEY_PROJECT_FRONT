@@ -61,6 +61,10 @@ export default function PromotionVideoStudio() {
   const [job, setJob] = useState<VideoRenderJob | null>(null);
   const [capabilities, setCapabilities] = useState<VideoRenderCapabilities | null>(null);
   const [voiceStyle, setVoiceStyle] = useState<VideoVoiceStyle>('NATURAL');
+  const [selectedProvider, setSelectedProvider] = useState<string>('POLLY');
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('');
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string>('');
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [sceneAssets, setSceneAssets] = useState<Record<number, UploadedSceneAsset>>({});
   const [assetUploading, setAssetUploading] = useState<number | null>(null);
   const [videoUrl, setVideoUrl] = useState('');
@@ -119,7 +123,16 @@ export default function PromotionVideoStudio() {
         return response.json() as Promise<VideoRenderCapabilities>;
       })
       .then(data => {
-        if (!cancelled) setCapabilities(data);
+        if (!cancelled) {
+          setCapabilities(data);
+          if (data.voiceCatalog?.length) {
+            const defaultProvider = data.voiceCatalog.find(p => p.configured) || data.voiceCatalog[0];
+            setSelectedProvider(defaultProvider.id);
+            if (defaultProvider.voices.length) {
+              setSelectedVoiceId(defaultProvider.voices[0].id);
+            }
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setCapabilities(null);
@@ -133,6 +146,30 @@ export default function PromotionVideoStudio() {
     if (!key) return;
     localStorage.setItem(ACCESS_KEY_STORAGE, key);
     setAccessKey(key);
+  };
+
+  const previewVoice = async (provider: string, voiceId: string) => {
+    if (previewAudioUrl) {
+      URL.revokeObjectURL(previewAudioUrl);
+      setPreviewAudioUrl('');
+    }
+    setPreviewLoading(true);
+    try {
+      const response = await fetch('/api/content-studio/voice-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-content-studio-key': accessKey,
+        },
+        body: JSON.stringify({ provider, voiceId, text: '안녕하세요, 이 음성으로 영상을 제작합니다.', voiceStyle }),
+      });
+      if (!response.ok) throw new Error('미리듣기 실패');
+      setPreviewAudioUrl(URL.createObjectURL(await response.blob()));
+    } catch {
+      setError('음성 미리듣기에 실패했습니다.');
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   const updateInput = <K extends keyof PromotionVideoInput>(key: K, value: PromotionVideoInput[K]) => {
@@ -202,6 +239,8 @@ export default function PromotionVideoStudio() {
           draft,
           quality,
           voiceStyle,
+          voiceProvider: selectedProvider,
+          voiceId: selectedVoiceId,
           sceneAssets: Object.fromEntries(
             Object.entries(sceneAssets).map(([order, asset]) => [order, asset.assetRef]),
           ),
@@ -407,10 +446,17 @@ export default function PromotionVideoStudio() {
                 videoLoading={videoLoading}
                 capabilities={capabilities}
                 voiceStyle={voiceStyle}
+                selectedProvider={selectedProvider}
+                selectedVoiceId={selectedVoiceId}
+                previewAudioUrl={previewAudioUrl}
+                previewLoading={previewLoading}
                 sceneAssets={sceneAssets}
                 assetUploading={assetUploading}
                 onApprove={setApproved}
                 onVoiceStyle={setVoiceStyle}
+                onSelectProvider={setSelectedProvider}
+                onSelectVoice={setSelectedVoiceId}
+                onPreviewVoice={previewVoice}
                 onUploadAsset={uploadSceneAsset}
                 onRender={renderVideo}
               />
@@ -431,10 +477,17 @@ function DraftResult({
   videoLoading,
   capabilities,
   voiceStyle,
+  selectedProvider,
+  selectedVoiceId,
+  previewAudioUrl,
+  previewLoading,
   sceneAssets,
   assetUploading,
   onApprove,
   onVoiceStyle,
+  onSelectProvider,
+  onSelectVoice,
+  onPreviewVoice,
   onUploadAsset,
   onRender,
 }: {
@@ -445,10 +498,17 @@ function DraftResult({
   videoLoading: boolean;
   capabilities: VideoRenderCapabilities | null;
   voiceStyle: VideoVoiceStyle;
+  selectedProvider: string;
+  selectedVoiceId: string;
+  previewAudioUrl: string;
+  previewLoading: boolean;
   sceneAssets: Record<number, UploadedSceneAsset>;
   assetUploading: number | null;
   onApprove: (approved: boolean) => void;
   onVoiceStyle: (style: VideoVoiceStyle) => void;
+  onSelectProvider: (provider: string) => void;
+  onSelectVoice: (voiceId: string) => void;
+  onPreviewVoice: (provider: string, voiceId: string) => void;
   onUploadAsset: (sceneOrder: number, file: File) => void;
   onRender: (quality: VideoRenderQuality) => void;
 }) {
@@ -497,13 +557,94 @@ function DraftResult({
       </div>
       <div className="studio-voice-style">
         <div>
-          <h3>내레이션 캐릭터</h3>
+          <h3>🎙 음성 설정</h3>
           <p>
             현재 공급자: <b>{capabilities?.selectedVoiceProvider || '확인 중'}</b>
             {!capabilities?.pixabayConfigured && ' · 스톡 이미지 키 미설정'}
           </p>
         </div>
+
+        {/* Provider Selection */}
+        {capabilities?.voiceCatalog && capabilities.voiceCatalog.length > 0 && (
+          <div className="studio-voice-providers">
+            <h4>음성 제공자</h4>
+            <div className="studio-provider-grid">
+              {capabilities.voiceCatalog.map(provider => (
+                <label
+                  className={`studio-provider-option ${selectedProvider === provider.id ? 'active' : ''} ${!provider.configured ? 'disabled' : ''}`}
+                  key={provider.id}
+                >
+                  <input
+                    type="radio"
+                    name="voice-provider"
+                    value={provider.id}
+                    checked={selectedProvider === provider.id}
+                    disabled={!provider.configured}
+                    onChange={() => {
+                      onSelectProvider(provider.id);
+                      if (provider.voices.length) onSelectVoice(provider.voices[0].id);
+                    }}
+                  />
+                  <span className="provider-name">{provider.name}</span>
+                  <span className={`provider-tier ${provider.tier.toLowerCase()}`}>
+                    {provider.tier === 'FREE' ? '무료' : '프리미엄'}
+                  </span>
+                  {!provider.configured && <small className="provider-unconfigured">API 키 필요</small>}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Voice Selection */}
+        {capabilities?.voiceCatalog && (() => {
+          const currentProvider = capabilities.voiceCatalog.find(p => p.id === selectedProvider);
+          if (!currentProvider || !currentProvider.voices.length) return null;
+          return (
+            <div className="studio-voice-list">
+              <h4>🗣 음성 선택</h4>
+              <div className="studio-voice-grid">
+                {currentProvider.voices.map(voice => (
+                  <label
+                    className={`studio-voice-option ${selectedVoiceId === voice.id ? 'active' : ''}`}
+                    key={voice.id}
+                  >
+                    <input
+                      type="radio"
+                      name="voice-id"
+                      value={voice.id}
+                      checked={selectedVoiceId === voice.id}
+                      onChange={() => onSelectVoice(voice.id)}
+                    />
+                    <div className="voice-info">
+                      <strong>{voice.name}</strong>
+                      <small>{voice.description}</small>
+                      <span className="voice-gender">{voice.gender === 'FEMALE' ? '👩' : voice.gender === 'MALE' ? '👨' : '🎭'}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="voice-preview-btn"
+                      disabled={previewLoading}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onPreviewVoice(currentProvider.id, voice.id);
+                      }}
+                    >
+                      {previewLoading ? '⏳' : '▶'}
+                    </button>
+                  </label>
+                ))}
+              </div>
+              {previewAudioUrl && (
+                <audio controls autoPlay src={previewAudioUrl} className="voice-preview-audio" />
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Voice Style */}
         <div className="studio-voice-options">
+          <h4>🎭 음성 스타일</h4>
           {voiceStyles.map(option => {
             const supported = option.value === 'NATURAL'
               || capabilities?.supportedVoiceStyles?.includes(option.value);
