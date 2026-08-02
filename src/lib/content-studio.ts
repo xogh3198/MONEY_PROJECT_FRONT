@@ -71,6 +71,24 @@ export interface ContentScriptDraft {
   aiDisclosure: string;
   factChecks: string[];
   sourceCredits: string[];
+  stylePrompt?: string;
+  referenceVideoUrl?: string;
+  referenceAnalysis?: ReferenceVideoAnalysis;
+}
+
+export interface ReferenceVideoAnalysis {
+  provider: 'APIFY';
+  status: 'ANALYZED' | 'NOT_CONFIGURED' | 'UNAVAILABLE' | 'FAILED';
+  sourceUrl: string;
+  title?: string;
+  author?: string;
+  durationSeconds?: number;
+  cueCount?: number;
+  averageCueSeconds?: number;
+  openingCueCount?: number;
+  speechDensity?: number;
+  styleSummary: string;
+  note: string;
 }
 
 export interface PromotionVideoInput {
@@ -84,6 +102,9 @@ export interface PromotionVideoInput {
   callToAction: string;
   verifiedFacts: string[];
   ownedAssetNotes: string;
+  referenceVideoUrl?: string;
+  stylePrompt?: string;
+  referenceAnalysisConsent?: boolean;
 }
 
 export type VideoRenderQuality = 'PREVIEW' | 'FINAL';
@@ -122,6 +143,27 @@ export interface VideoRenderCapabilities {
   voiceCatalog?: VoiceCatalogEntry[];
   pixabayConfigured: boolean;
   ownedMediaUpload: boolean;
+  higgsfieldConfigured?: boolean;
+  aiSceneProvider?: string;
+  apifyReferenceConfigured?: boolean;
+  referenceAnalysisProvider?: string;
+}
+
+export interface AiSceneGenerationJob {
+  id: string;
+  sceneOrder: number;
+  status: 'QUEUED' | 'GENERATING' | 'COMPLETED' | 'FAILED';
+  stage: string;
+  progress: number;
+  provider: string;
+  assetRef?: string;
+  mediaKind?: 'IMAGE' | 'VIDEO';
+  contentType?: string;
+  fileName?: string;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
 }
 
 export interface VideoRenderJob {

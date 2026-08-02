@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
 import {
+  AiSceneGenerationJob,
+  ContentScene,
   ContentScriptDraft,
   PromotionVideoInput,
   UploadedSceneAsset,
@@ -48,6 +50,9 @@ const initialInput: PromotionVideoInput = {
   callToAction: '대표 페이지에서 자세히 알아보기',
   verifiedFacts: [],
   ownedAssetNotes: '',
+  referenceVideoUrl: '',
+  stylePrompt: '첫 2초에 문제를 보여주고, 실제 사용 장면을 빠르게 전환하는 자연스러운 정보형 쇼츠',
+  referenceAnalysisConsent: false,
 };
 
 export default function PromotionVideoStudio() {
@@ -67,6 +72,8 @@ export default function PromotionVideoStudio() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [sceneAssets, setSceneAssets] = useState<Record<number, UploadedSceneAsset>>({});
   const [assetUploading, setAssetUploading] = useState<number | null>(null);
+  const [aiSceneJobs, setAiSceneJobs] = useState<Record<number, AiSceneGenerationJob>>({});
+  const [aiSceneLoading, setAiSceneLoading] = useState<number | null>(null);
   const [videoUrl, setVideoUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
@@ -92,7 +99,7 @@ export default function PromotionVideoStudio() {
       try {
         const parsed = JSON.parse(handoff) as { input?: PromotionVideoInput };
         if (parsed.input?.title && parsed.input.description) {
-          setInput(parsed.input);
+          setInput({ ...initialInput, ...parsed.input });
           setReferencesText(parsed.input.referenceLinks.join('\n'));
           setFactsText(parsed.input.verifiedFacts.join('\n'));
           setDraft(null);
@@ -187,6 +194,7 @@ export default function PromotionVideoStudio() {
       if (asset.previewUrl) URL.revokeObjectURL(asset.previewUrl);
     });
     setSceneAssets({});
+    setAiSceneJobs({});
 
     try {
       const payload: PromotionVideoInput = {
@@ -214,6 +222,84 @@ export default function PromotionVideoStudio() {
       setError(cause instanceof Error ? cause.message : '영상 초안을 만들지 못했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateAiScene = async (scene: ContentScene) => {
+    if (!draft || !capabilities?.higgsfieldConfigured) return;
+    const activeGeneratedCount = Object.values(aiSceneJobs)
+      .filter(item => item.status !== 'FAILED').length;
+    if (!aiSceneJobs[scene.order] && activeGeneratedCount >= 2) {
+      setError('비용과 과도한 AI 느낌을 줄이기 위해 한 영상에서 AI 장면은 최대 2개만 만들 수 있습니다. 나머지는 실제 사진·영상 또는 스톡을 사용해 주세요.');
+      return;
+    }
+
+    setAiSceneLoading(scene.order);
+    setError('');
+    try {
+      const submitResponse = await fetch('/api/content-studio/ai-assets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-content-studio-key': accessKey,
+        },
+        body: JSON.stringify({
+          experimentId: draft.experimentId,
+          scene,
+          stylePrompt: draft.stylePrompt || input.stylePrompt,
+        }),
+      });
+      const submitted = await submitResponse.json() as AiSceneGenerationJob & { error?: string };
+      if (!submitResponse.ok) throw new Error(submitted.error || 'AI 장면 생성을 시작하지 못했습니다.');
+
+      let current = submitted;
+      setAiSceneJobs(items => ({ ...items, [scene.order]: current }));
+      const deadline = Date.now() + 15 * 60 * 1_000;
+      while (current.status === 'QUEUED' || current.status === 'GENERATING') {
+        if (Date.now() > deadline) throw new Error('AI 장면 생성이 15분 안에 끝나지 않았습니다.');
+        await new Promise(resolve => window.setTimeout(resolve, 3_000));
+        const statusResponse = await fetch(`/api/content-studio/ai-assets/${current.id}`, {
+          cache: 'no-store',
+          headers: { 'x-content-studio-key': accessKey },
+        });
+        const statusData = await statusResponse.json() as AiSceneGenerationJob & { error?: string };
+        if (!statusResponse.ok) throw new Error(statusData.error || 'AI 장면 상태를 확인하지 못했습니다.');
+        current = statusData;
+        setAiSceneJobs(items => ({ ...items, [scene.order]: current }));
+      }
+      if (current.status === 'FAILED' || !current.assetRef) {
+        throw new Error(current.errorMessage || 'AI 장면 생성에 실패했습니다.');
+      }
+
+      const fileResponse = await fetch(`/api/content-studio/ai-assets/${current.id}/file`, {
+        cache: 'no-store',
+        headers: { 'x-content-studio-key': accessKey },
+      });
+      if (!fileResponse.ok) throw new Error('완료된 AI 장면을 불러오지 못했습니다.');
+      const previewUrl = URL.createObjectURL(await fileResponse.blob());
+      setSceneAssets(items => {
+        const previous = items[scene.order];
+        if (previous?.previewUrl) URL.revokeObjectURL(previous.previewUrl);
+        return {
+          ...items,
+          [scene.order]: {
+            assetRef: current.assetRef!,
+            mediaKind: 'VIDEO',
+            contentType: current.contentType || 'video/mp4',
+            fileName: current.fileName || `AI 장면 ${scene.order}`,
+            previewUrl,
+          },
+        };
+      });
+      trackGrowthEvent('promotion_ai_scene_completed', {
+        experiment_id: draft.experimentId,
+        scene_order: scene.order,
+        provider: current.provider,
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'AI 장면 생성에 실패했습니다.');
+    } finally {
+      setAiSceneLoading(null);
     }
   };
 
@@ -419,6 +505,42 @@ export default function PromotionVideoStudio() {
             <label>참고 링크 (선택, 한 줄에 하나)
               <textarea rows={3} value={referencesText} onChange={event => setReferencesText(event.target.value)} placeholder={"공식 상세 페이지, 플레이스, 앱스토어 등 최대 5개"} />
             </label>
+            <div className="studio-reference-panel">
+              <div>
+                <p className="section-kicker">REFERENCE VIDEO</p>
+                <h3>유튜브는 내용이 아니라 편집 구조만 참고합니다.</h3>
+                <p>훅 시점·자막 전환·말의 밀도만 분석하고 원문 문장, 영상, 음성은 가져오지 않습니다.</p>
+              </div>
+              <label>참고 YouTube URL (선택)
+                <input
+                  type="url"
+                  value={input.referenceVideoUrl || ''}
+                  onChange={event => updateInput('referenceVideoUrl', event.target.value)}
+                  placeholder="https://www.youtube.com/shorts/..."
+                />
+              </label>
+              <label>원하는 영상 느낌
+                <textarea
+                  rows={3}
+                  maxLength={800}
+                  value={input.stylePrompt || ''}
+                  onChange={event => updateInput('stylePrompt', event.target.value)}
+                  placeholder="예: 첫 2초에 질문, 빠른 자막, 실제 사용 화면 중심, 차분하지만 귀에 꽂히는 말투"
+                />
+              </label>
+              <label className="studio-reference-consent">
+                <input
+                  type="checkbox"
+                  checked={Boolean(input.referenceAnalysisConsent)}
+                  disabled={!input.referenceVideoUrl}
+                  onChange={event => updateInput('referenceAnalysisConsent', event.target.checked)}
+                />
+                <span>
+                  분석 권한이 있는 공개 영상이며, Apify 분석 비용이 발생할 수 있음을 확인했습니다.
+                  {!capabilities?.apifyReferenceConfigured && ' 현재는 Apify가 연결되지 않아 스타일 문구만 사용합니다.'}
+                </span>
+              </label>
+            </div>
             <label>사용권이 있는 사진·화면
               <textarea rows={3} value={input.ownedAssetNotes} onChange={event => updateInput('ownedAssetNotes', event.target.value)} placeholder="예: 제품 정면 사진 3장, 포장 영상 1개, 앱 화면 캡처 4장" />
             </label>
@@ -452,12 +574,15 @@ export default function PromotionVideoStudio() {
                 previewLoading={previewLoading}
                 sceneAssets={sceneAssets}
                 assetUploading={assetUploading}
+                aiSceneJobs={aiSceneJobs}
+                aiSceneLoading={aiSceneLoading}
                 onApprove={setApproved}
                 onVoiceStyle={setVoiceStyle}
                 onSelectProvider={setSelectedProvider}
                 onSelectVoice={setSelectedVoiceId}
                 onPreviewVoice={previewVoice}
                 onUploadAsset={uploadSceneAsset}
+                onGenerateAiScene={generateAiScene}
                 onRender={renderVideo}
               />
             )}
@@ -483,12 +608,15 @@ function DraftResult({
   previewLoading,
   sceneAssets,
   assetUploading,
+  aiSceneJobs,
+  aiSceneLoading,
   onApprove,
   onVoiceStyle,
   onSelectProvider,
   onSelectVoice,
   onPreviewVoice,
   onUploadAsset,
+  onGenerateAiScene,
   onRender,
 }: {
   draft: ContentScriptDraft;
@@ -504,12 +632,15 @@ function DraftResult({
   previewLoading: boolean;
   sceneAssets: Record<number, UploadedSceneAsset>;
   assetUploading: number | null;
+  aiSceneJobs: Record<number, AiSceneGenerationJob>;
+  aiSceneLoading: number | null;
   onApprove: (approved: boolean) => void;
   onVoiceStyle: (style: VideoVoiceStyle) => void;
   onSelectProvider: (provider: string) => void;
   onSelectVoice: (voiceId: string) => void;
   onPreviewVoice: (provider: string, voiceId: string) => void;
   onUploadAsset: (sceneOrder: number, file: File) => void;
+  onGenerateAiScene: (scene: ContentScene) => void;
   onRender: (quality: VideoRenderQuality) => void;
 }) {
   return (
@@ -519,6 +650,15 @@ function DraftResult({
         <h3>{draft.title}</h3>
         <p>{draft.hook}</p>
       </div>
+      {draft.referenceAnalysis && (
+        <div className={`studio-reference-result ${draft.referenceAnalysis.status.toLowerCase()}`}>
+          <strong>
+            참고 영상 구조 {draft.referenceAnalysis.status === 'ANALYZED' ? '분석 완료' : '대체 처리'}
+          </strong>
+          <p>{draft.referenceAnalysis.styleSummary}</p>
+          <small>{draft.referenceAnalysis.note}</small>
+        </div>
+      )}
       <div className="studio-scenes">
         {draft.scenes.map(scene => (
           <article key={`${scene.order}-${scene.onScreenText}`}>
@@ -551,7 +691,31 @@ function DraftResult({
                     ? `${sceneAssets[scene.order].fileName} 교체`
                     : '내 사진·영상 넣기'}
               </label>
+              <button
+                type="button"
+                className="studio-ai-scene-button"
+                disabled={
+                  !capabilities?.higgsfieldConfigured
+                  || aiSceneLoading !== null
+                  || aiSceneJobs[scene.order]?.status === 'COMPLETED'
+                }
+                onClick={() => onGenerateAiScene(scene)}
+              >
+                {!capabilities?.higgsfieldConfigured
+                  ? 'Higgsfield 연결 필요'
+                  : aiSceneLoading === scene.order
+                    ? 'AI 장면 생성 중…'
+                    : aiSceneJobs[scene.order]?.status === 'COMPLETED'
+                      ? 'AI 장면 적용됨'
+                      : 'AI 영상 장면 만들기'}
+              </button>
             </div>
+            {aiSceneJobs[scene.order] && aiSceneJobs[scene.order].status !== 'COMPLETED' && (
+              <p className={`studio-ai-scene-status ${aiSceneJobs[scene.order].status.toLowerCase()}`}>
+                {aiSceneJobs[scene.order].stage} · {aiSceneJobs[scene.order].progress}%
+                {aiSceneJobs[scene.order].errorMessage && ` · ${aiSceneJobs[scene.order].errorMessage}`}
+              </p>
+            )}
           </article>
         ))}
       </div>

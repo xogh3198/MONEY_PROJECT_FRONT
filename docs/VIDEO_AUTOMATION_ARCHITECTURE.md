@@ -620,6 +620,45 @@ AnalyticsProvider
 
 외부 계정·OAuth·게시 승인 후에만 시작한다.
 
+### VE-007 — 참고영상 구조 분석과 선택형 AI 장면
+
+검증일: 2026-08-02
+
+참고 YouTube URL은 영상이나 대본을 내려받아 재사용하는 입력이 아니다. 사용자가 분석 권한과 외부
+비용 가능성을 확인한 경우에만 Apify Actor가 공개 자막의 타임코드와 메타데이터를 읽고 다음 파생값만
+`ReferenceVideoAnalysis`로 반환한다.
+
+- 전체 길이와 자막 구간 수
+- 평균 자막 구간 길이와 첫 5초 구간 수
+- 초당 문자 수로 계산한 정보 밀도
+- 사용자가 직접 작성한 스타일 프롬프트
+
+자막 원문은 프론트, Gemini 프롬프트, 데이터베이스에 저장하지 않는다. Apify가 없거나 자막이 없거나
+실패해도 사용자가 쓴 스타일 프롬프트로 대본을 생성해 기존 렌더 경로를 유지한다.
+
+Higgsfield는 전체 영상 제작 엔진이 아니라 장면 자산 공급자로 둔다. 운영자가 장면별 버튼을 눌렀을
+때만 다음 비동기 작업을 실행한다.
+
+1. `higgsfield-ai/soul/standard`로 텍스트 기반 9:16 기준 이미지를 생성한다.
+2. `higgsfield-ai/dop/standard`로 기준 이미지를 5초 무자막 영상으로 변환한다.
+3. 결과 URL의 HTTPS·공개 IP·형식·25MB 제한을 검증하고 서버 볼륨에 내려받는다.
+4. 기존 사용자 업로드와 같은 `assetRef`로 저장해 TTS·ASS 자막·FFmpeg 렌더에 넣는다.
+
+한 영상의 AI 장면은 최대 2개로 제한한다. 실제 사이트 화면, 제품 사진, 사용자 촬영 영상이 우선이며
+AI 장면은 자료가 없는 문제 상황·분위기 장면만 보완한다. 글자·로고·공인·저작권 캐릭터·가짜 UI는
+생성 프롬프트에서 금지하고, 사실적인 생성물은 게시 전 플랫폼 AI 표시 여부를 사람이 확인한다.
+
+외부 자격증명이 없을 때의 결과 경로는 그대로 유지된다.
+
+`사용자 자산 → Pixabay → 자체 카드 → 음성·자막·FFmpeg MP4`
+
+연결 시에만 사용할 서버 환경변수:
+
+- `APIFY_REFERENCE_ENABLED=true`, `APIFY_API_TOKEN`
+- `HIGGSFIELD_ENABLED=true`, `HIGGSFIELD_API_KEY`, `HIGGSFIELD_API_SECRET`
+
+두 서비스 모두 별도 약관·비용 승인이 필요하며 자동 게시나 자동 대량 생성을 활성화하지 않는다.
+
 ## 11. 성공·중단 기준
 
 ### 기술 지표
@@ -709,5 +748,10 @@ AnalyticsProvider
 - [Cloudinary 영상 레이어](https://cloudinary.com/documentation/video_layers)
 - [Unsplash API 지침](https://help.unsplash.com/en/articles/2511245-unsplash-api-guidelines)
 - [HeyGen Create Video API](https://developers.heygen.com/reference/create-video)
+- [Apify MCP 및 Actor 실행](https://docs.apify.com/integrations/mcp)
+- [Higgsfield API 사용법](https://docs.higgsfield.ai/docs/how-to/introduction)
+- [Higgsfield 이미지 기반 영상 생성](https://docs.higgsfield.ai/docs/guides/video)
+- [YouTube 채널 수익화 정책](https://support.google.com/youtube/answer/1311392)
+- [YouTube AI 생성·변경 콘텐츠 표시](https://support.google.com/youtube/answer/14328491)
 - [AWS Step Functions ECS/Fargate 연동](https://docs.aws.amazon.com/step-functions/latest/dg/connect-ecs.html)
 - [Amazon SQS DLQ](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html)

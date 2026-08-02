@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ContentScriptDraft, PromotionVideoInput } from '@/lib/content-studio';
+import {
+  ContentScriptDraft,
+  PromotionVideoInput,
+  ReferenceVideoAnalysis,
+} from '@/lib/content-studio';
 import { authorizeContentStudio } from '@/lib/server/content-studio-auth';
 import { generateGeminiJson } from '@/lib/server/gemini';
+import { fetchVideoRenderApi, readApiError } from '@/lib/server/video-render-api';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -76,13 +81,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '홍보할 대상의 이름과 설명을 입력해 주세요.' }, { status: 400 });
     }
 
-    const generated = await generateGeminiJson<GeneratedDraft>(buildPrompt(input), SCRIPT_SCHEMA);
+    const referenceAnalysis = await analyzeReferenceVideo(input);
+    const generated = await generateGeminiJson<GeneratedDraft>(
+      buildPrompt(input, referenceAnalysis),
+      SCRIPT_SCHEMA,
+    );
     const draft: ContentScriptDraft = {
       ...generated,
       experimentId: `promotion-${compactTimestamp()}`,
       status: 'DRAFT',
       requiresHumanReview: true,
       generatedAt: new Date().toISOString(),
+      stylePrompt: input.stylePrompt,
+      referenceVideoUrl: input.referenceVideoUrl,
+      referenceAnalysis,
     };
 
     if (draft.scenes?.length !== 7 || !draft.narration || !draft.factChecks?.length) {
@@ -133,6 +145,10 @@ function normalizeInput(input?: PromotionVideoInput): PromotionVideoInput | null
     callToAction: input.callToAction?.trim().slice(0, 300) || '자세히 알아보기',
     verifiedFacts: (input.verifiedFacts || []).map(item => item.trim()).filter(Boolean).slice(0, 10),
     ownedAssetNotes: input.ownedAssetNotes?.trim().slice(0, 1_000) || '제공된 사용권 확인 자산 없음',
+    referenceVideoUrl: cleanYouTubeUrl(input.referenceVideoUrl),
+    stylePrompt: input.stylePrompt?.trim().slice(0, 800)
+      || '사람이 직접 편집한 듯 자연스럽고 정보 중심인 세로형 숏폼',
+    referenceAnalysisConsent: Boolean(input.referenceAnalysisConsent && input.referenceVideoUrl),
   };
 }
 
@@ -147,7 +163,42 @@ function cleanPublicUrl(value?: string): string | undefined {
   }
 }
 
-function buildPrompt(input: PromotionVideoInput): string {
+function cleanYouTubeUrl(value?: string): string | undefined {
+  const cleaned = cleanPublicUrl(value);
+  if (!cleaned) return undefined;
+  const url = new URL(cleaned);
+  const host = url.hostname.toLowerCase();
+  if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(host)) return undefined;
+  return url.toString();
+}
+
+async function analyzeReferenceVideo(input: PromotionVideoInput): Promise<ReferenceVideoAnalysis | undefined> {
+  if (!input.referenceVideoUrl || !input.referenceAnalysisConsent) return undefined;
+  try {
+    const response = await fetchVideoRenderApi('/api/content-videos/reference-analysis', {
+      method: 'POST',
+      body: JSON.stringify({
+        referenceVideoUrl: input.referenceVideoUrl,
+        stylePrompt: input.stylePrompt,
+      }),
+      signal: AbortSignal.timeout(65_000),
+    });
+    if (!response.ok) {
+      throw new Error(await readApiError(response, `참고 영상 분석 실패 (${response.status})`));
+    }
+    return await response.json() as ReferenceVideoAnalysis;
+  } catch (error) {
+    return {
+      provider: 'APIFY',
+      status: 'FAILED',
+      sourceUrl: input.referenceVideoUrl,
+      styleSummary: `${input.stylePrompt || '자연스러운 정보형 숏폼'}. 원문의 문장·영상·음성은 복제하지 않습니다.`,
+      note: error instanceof Error ? error.message : '참고 영상 분석을 완료하지 못했습니다.',
+    };
+  }
+}
+
+function buildPrompt(input: PromotionVideoInput, referenceAnalysis?: ReferenceVideoAnalysis): string {
   return `당신은 사람이 직접 편집한 듯 간결하고 구체적인 한국어 숏폼 홍보 영상의 편집자입니다.
 
 아래 사용자가 제공한 정보만 근거로 9:16 세로형 30~45초 홍보 영상 초안을 만드세요.
@@ -168,7 +219,14 @@ function buildPrompt(input: PromotionVideoInput): string {
 - aiDisclosure에는 "AI 보조로 대본·음성·자막을 제작했으며 게시 전 사람이 검수함"을 명시합니다.
 - disclaimer는 업종에 맞는 주의 문구를 작성하되, 규제 업종이 아니면 사실·조건 확인 문구만 간단히 씁니다.
 - 외부 게시, 광고 집행, 성과 보장을 약속하지 않습니다.
+- 참고 영상은 훅 시점, 자막 전환 속도, 정보 밀도 같은 구조만 참고합니다. 원문의 문장, 장면, 음성,
+  크리에이터의 고유 표현을 복제하거나 비슷하게 재현하지 않습니다.
+- 장면 visualDirection은 실제 고객 자산을 우선하되, 자산이 없는 장면은 AI 생성 영상으로 바꿀 수 있도록
+  한 장면에 한 피사체와 구체적인 동작을 제안합니다. AI 화면에 글자·로고·실제 인물·가짜 UI를 만들지 않습니다.
 
 사용자 입력:
-${JSON.stringify(input, null, 2)}`;
+${JSON.stringify(input, null, 2)}
+
+참고 영상에서 파생한 구조 지표(원문 미포함):
+${JSON.stringify(referenceAnalysis || { status: 'NOT_USED' }, null, 2)}`;
 }
