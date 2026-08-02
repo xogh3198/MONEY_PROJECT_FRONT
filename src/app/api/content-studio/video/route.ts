@@ -28,8 +28,14 @@ export async function POST(request: NextRequest) {
     const voiceStyle: VideoVoiceStyle = ['WHISPER', 'SNARKY'].includes(body.voiceStyle || '')
       ? body.voiceStyle as VideoVoiceStyle
       : 'NATURAL';
-    if (!draft?.experimentId || !draft.title || draft.scenes?.length !== 7) {
-      return NextResponse.json({ error: '검수할 7장면 대본이 필요합니다.' }, { status: 400 });
+    if (
+      !draft?.experimentId
+      || !draft.title
+      || !draft.scenes
+      || draft.scenes.length < 5
+      || draft.scenes.length > 8
+    ) {
+      return NextResponse.json({ error: '검수할 5~8장면 대본이 필요합니다.' }, { status: 400 });
     }
 
     const response = await fetchVideoRenderApi('/api/content-videos/render', {

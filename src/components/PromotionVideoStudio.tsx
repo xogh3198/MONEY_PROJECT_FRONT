@@ -25,9 +25,9 @@ const voiceStyles: Array<{
   label: string;
   description: string;
 }> = [
-  { value: 'NATURAL', label: '자연스러운 설명', description: '문맥에 맞는 담백한 전달' },
-  { value: 'WHISPER', label: '낮은 속삭임', description: '궁금증을 남기는 가까운 톤' },
-  { value: 'SNARKY', label: '시니컬 한마디', description: '조금 투덜대지만 빠르고 또렷한 톤' },
+  { value: 'NATURAL', label: '담백한 고백', description: '광고가 아닌 실제 경험처럼 전달' },
+  { value: 'WHISPER', label: '소심한 속삭임', description: '비밀을 말하듯 시작해 궁금증을 남김' },
+  { value: 'SNARKY', label: '건조한 자조', description: '살짝 투덜대고 머쓱하지만 귀에 남는 톤' },
 ];
 
 const sourceTypes: Array<{ value: PromotionVideoInput['sourceType']; label: string }> = [
@@ -51,7 +51,7 @@ const initialInput: PromotionVideoInput = {
   verifiedFacts: [],
   ownedAssetNotes: '',
   referenceVideoUrl: '',
-  stylePrompt: '첫 2초에 문제를 보여주고, 실제 사용 장면을 빠르게 전환하는 자연스러운 정보형 쇼츠',
+  stylePrompt: '설명 없이 작은 곤란을 고백하고, 짧게 되물은 뒤 해결책을 늦게 공개하는 캐릭터형 쇼츠',
   referenceAnalysisConsent: false,
 };
 
@@ -65,7 +65,7 @@ export default function PromotionVideoStudio() {
   const [approved, setApproved] = useState(false);
   const [job, setJob] = useState<VideoRenderJob | null>(null);
   const [capabilities, setCapabilities] = useState<VideoRenderCapabilities | null>(null);
-  const [voiceStyle, setVoiceStyle] = useState<VideoVoiceStyle>('NATURAL');
+  const [voiceStyle, setVoiceStyle] = useState<VideoVoiceStyle>('SNARKY');
   const [selectedProvider, setSelectedProvider] = useState<string>('POLLY');
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>('');
   const [previewAudioUrl, setPreviewAudioUrl] = useState<string>('');
@@ -133,8 +133,13 @@ export default function PromotionVideoStudio() {
         if (!cancelled) {
           setCapabilities(data);
           if (data.voiceCatalog?.length) {
-            const defaultProvider = data.voiceCatalog.find(p => p.configured) || data.voiceCatalog[0];
+            const defaultProvider = data.voiceCatalog.find(p => p.id === 'ELEVENLABS' && p.configured)
+              || data.voiceCatalog.find(p => p.configured)
+              || data.voiceCatalog[0];
             setSelectedProvider(defaultProvider.id);
+            setVoiceStyle(
+              ['ELEVENLABS', 'TYPECAST'].includes(defaultProvider.id) ? 'SNARKY' : 'NATURAL',
+            );
             if (defaultProvider.voices.length) {
               setSelectedVoiceId(defaultProvider.voices[0].id);
             }
@@ -168,7 +173,7 @@ export default function PromotionVideoStudio() {
           'Content-Type': 'application/json',
           'x-content-studio-key': accessKey,
         },
-        body: JSON.stringify({ provider, voiceId, text: '안녕하세요, 이 음성으로 영상을 제작합니다.', voiceStyle }),
+        body: JSON.stringify({ provider, voiceId, text: voicePreviewCopy(voiceStyle), voiceStyle }),
       });
       if (!response.ok) throw new Error('미리듣기 실패');
       setPreviewAudioUrl(URL.createObjectURL(await response.blob()));
@@ -208,7 +213,7 @@ export default function PromotionVideoStudio() {
           'Content-Type': 'application/json',
           'x-content-studio-key': accessKey,
         },
-        body: JSON.stringify({ input: payload }),
+        body: JSON.stringify({ input: payload, voiceStyle }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || '영상 초안을 만들지 못했습니다.');
@@ -853,4 +858,14 @@ function DraftResult({
 
 function lines(value: string): string[] {
   return value.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+}
+
+function voicePreviewCopy(style: VideoVoiceStyle): string {
+  if (style === 'WHISPER') {
+    return '저기요... 이걸 아직도 직접 하고 계셨어요? 사실 더 쉬운 방법이 있거든요.';
+  }
+  if (style === 'SNARKY') {
+    return '여러분... 저 좀 곤란해졌어요. 왜 그러냐고요? 이렇게까지 만들었는데 아무도 모르시더라고요.';
+  }
+  return '제가 괜한 걸 만들었나 봐요. 그래도 한 번만 보실래요? 생각보다 편하거든요.';
 }
