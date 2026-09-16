@@ -430,6 +430,7 @@ export default function PromotionVideoStudio() {
 
       <section className="studio-hero">
         <p className="section-kicker">MARKETING MAP · VIDEO STUDIO</p>
+        <Link href="/promotion-map/studio/clips" className="inline-flex rounded-full border border-current px-4 py-2 text-sm font-bold mb-5 hover:opacity-70">인기 영상 탐색 · 원본 클립 편집 ↗</Link>
         <h1>홍보할 내용을 넣으면,<br /><em>말하고 보여줄 순서</em>를 만듭니다.</h1>
         <p>
           마케팅맵에서 정리한 홍보 대상과 목표를 30~45초 대본·큰 자막·7개 장면으로 바꿉니다.

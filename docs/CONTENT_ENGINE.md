@@ -34,7 +34,7 @@
 ### 다음 연결 후보
 
 - [네이버 DataLab 검색어 트렌드 API](https://developers.naver.com/docs/datalab/search/): 한국 검색 관심도의 상대 변화
-- [YouTube Data API `videos.list`](https://developers.google.com/youtube/v3/docs/videos/list): `chart=mostPopular`, `regionCode=KR` 기반 플랫폼 관심도
+- [YouTube Data API `search.list`](https://developers.google.com/youtube/v3/docs/search/list): 키워드·기간·언어 관련성·라이선스별 영상 탐색. `videos.list`로 길이와 조회수를 확인한다. `mostPopular` 전체 인기 영상으로 간주하지 않는다.
 - Google Search Console: 실제 검색 노출·클릭·질문
 - YouTube Analytics / Meta Insights: 게시 후 유지율·완주율·사이트 클릭
 
